@@ -1,8 +1,8 @@
 # arie
 
-A type-centered [purely functional programming
-language](https://en.wikipedia.org/wiki/Purely_functional_programming)
-designed to type binary files.
+A type-centred [purely functional
+programming](https://en.wikipedia.org/wiki/Purely_functional_programming)
+language designed to type binary files.
 
 # Why does this exist?
 
@@ -21,7 +21,7 @@ plan on building with arie include:
 - [ ] A compression tool that compresses binary data with arie types
   - Arie's type system is designed to be a guide for [arithmetic
     coding](https://en.wikipedia.org/wiki/Arithmetic_coding) - it's
-    kind of where the name comes from (**ari**thmetic
+    partially where the name comes from (**ari**thmetic
     **e**ncoding/**e**ditor)
 
 ## ... but also, not just binary formats
@@ -296,10 +296,12 @@ programming language.
 </td>
 <td>
 
-- [record, struct, tuple](https://en.wikipedia.org/wiki/Record_(computer_science))
+- [record, struct,
+  tuple](https://en.wikipedia.org/wiki/Record_(computer_science))
 - [class](https://en.wikipedia.org/wiki/Class_(computer_programming))
 - [trait](https://en.wikipedia.org/wiki/Trait_(computer_programming))
-- [concept, interface](https://en.wikipedia.org/wiki/Concept_(generic_programming))
+- [concept,
+  interface](https://en.wikipedia.org/wiki/Concept_(generic_programming))
 - [protocol](https://en.wikipedia.org/wiki/Protocol_(object-oriented_programming))
 
 </td>
@@ -315,9 +317,12 @@ programming language.
 </td>
 <td>
 
-- [function type signature](https://en.wikipedia.org/wiki/Type_signature)
-- [associative array, map, dictionary](https://en.wikipedia.org/wiki/Associative_array)
+- [function type
+  signature](https://en.wikipedia.org/wiki/Type_signature)
+- [associative array, map,
+  dictionary](https://en.wikipedia.org/wiki/Associative_array)
 - [array type](https://en.wikipedia.org/wiki/Array_data_type)
+- [stack](https://en.wikipedia.org/wiki/Stack_%28abstract_data_type%29)
 - [matrix](https://en.wikipedia.org/wiki/Matrix_(mathematics))
 - [vector space](https://en.wikipedia.org/wiki/Vector_space)
 - [tensor](https://en.wikipedia.org/wiki/Tensor)
@@ -344,15 +349,15 @@ you can precisely type the number of states using the `3` type:
 ```
 
 The possible values of this type are `0`, `1`, `2`, which you can use
-to represent `small`, `medium`, `large`. This is an incredibly
-powerful concept, but this small example doesn't fit with the main
-goal of arie, to make things more accessible.
+to represent `small`, `medium`, `large`. This is a powerful concept,
+but this small example doesn't fit with the main goal of arie, to make
+things more accessible.
 
-...this is exactly where expressions & labels come in! You can break
-down and label the individual states of a `3` type with a [sum
-expression](#additive-expressions). For example, this sum expression
-produces a sum type that "sums" to the same number of states as the
-`3` type:
+...this is exactly where algebraic expressions & labels come in! You
+can break down and label the individual states of a `3` type with a
+[sum expression](#additive-expressions). For example, this sum
+expression produces a sum type that "sums" to the same number of
+states as the `3` type:
 
 ```lisp
 :size (+ :small 1 :medium 1 :large 1)
@@ -380,11 +385,11 @@ smaller numbers... and label them 🙂.
 
 In arie all types have an implicit binding with a corresponding
 runtime value. [`@`](#dereference-expression) can be used on a type to
-bring this implicitly bound value from _"value-space"_ into
-_"type-space"_:
+bring this implicitly bound value from "value-space" into
+"type-space".
 
 Here's an example where [`@`](#dereference-expression) is used to help
-describe an 24-bit RGB color image will a dynamically sized `width` &
+describe an 24-bit RGB colour image will a dynamically sized `width` &
 `height`:
 
 ```lisp
@@ -397,7 +402,9 @@ describe an 24-bit RGB color image will a dynamically sized `width` &
   (^
     :pixel (* :r byte :g byte :b byte)
     @width
-    @height))
+    @height
+  )
+)
 ```
 
 This concept, along with the fact that arie is [purely
@@ -423,35 +430,51 @@ sense. Maybe something is only used once and it would be simpler to
 just inline it, maybe you don't even know how to name something yet,
 but you want to define its structure. Maybe you just want to refer to
 a type nested within another type without decoupling it from its
-parent. When you can label everything, anything can be a module.
+parent.
 
-One of the core philosophies of arie is to minimize friction, while
-also providing a level of precision that isn't possible in other
-languages.
+When you can label everything, anything can be a module.
 
 # What ideas does arie steal?
 
 Arie steals a bunch of good ideas from various places:
 
 Academic Inspirations:
-- [Type theory](https://en.wikipedia.org/wiki/Type_theory) & [algebraic types](https://en.wikipedia.org/wiki/Algebraic_data_type)
+- [Type theory](https://en.wikipedia.org/wiki/Type_theory) &
+  [algebraic types](https://en.wikipedia.org/wiki/Algebraic_data_type)
 - [Group theory](https://en.wikipedia.org/wiki/Group_theory)
 - [Set theory](https://en.wikipedia.org/wiki/Set_theory)
+- [Curry-Howard
+  correspondence](https://en.wikipedia.org/wiki/Curry%E2%80%93Howard_correspondence)
 - [Arithmetic coding](https://en.wikipedia.org/wiki/Arithmetic_coding)
-- [Purely functional programming](https://en.wikipedia.org/wiki/Purely_functional_programming)
+- [Purely functional
+  programming](https://en.wikipedia.org/wiki/Purely_functional_programming)
 - [Lazy evaluation](https://en.wikipedia.org/wiki/Lazy_evaluation)
 - [Currying](https://en.wikipedia.org/wiki/Currying)
 - [Homoiconicity](https://en.wikipedia.org/wiki/Homoiconicity)
 
 Language Inspirations:
-- [Lisp](https://en.wikipedia.org/wiki/Lisp_(programming_language)) ([s-expressions](https://en.wikipedia.org/wiki/S-expression) - arie is not a lisp, homoiconicity, functional-focused)
-- [Rust](https://www.rust-lang.org) (sum types & other algebraic types)
-- [Nix](https://nixos.org/manual/nix/stable/introduction.html) (purely functional, lazily evaluated, currying)
-- [Haskell](https://www.haskell.org) (indirectly through Rust & Nix + monads)
+- [Lisp](https://en.wikipedia.org/wiki/Lisp_(programming_language))
+  ([s-expressions](https://en.wikipedia.org/wiki/S-expression) - arie
+  is not a lisp, homoiconicity, functional-focused)
+- [Rust](https://www.rust-lang.org) (sum types & other algebraic
+  types)
+- [Nix](https://nixos.org/manual/nix/stable/introduction.html) (purely
+  functional, lazily evaluated, currying)
+- [Haskell](https://www.haskell.org) (indirectly through Rust & Nix +
+  monads)
 
 # Language reference
 
-## Natural expressions
+## Syntactic expressions
+
+Syntactic expressions are the base expressions of arie. They are
+defined without parenthesis, in contrast to the [symbolic
+expressions](https://en.wikipedia.org/wiki/S-expression).
+
+Anything that's a syntactic expression is designed that way to reduce
+the syntax noise of parenthesis.
+
+### Natural expressions
 
 ```
 0, 1, 2, 3, ...
@@ -463,79 +486,190 @@ language, which are based on [natural
 numbers](https://en.wikipedia.org/wiki/Natural_number). Its "value"
 encodes the number of possible states that can exist in the type.
 
-### Bottom expression
+#### Bottom expression
 
 ```lisp
-:bottom-type 0
+0
 ```
 
-Produces a [bottom type `⊥`](https://en.wikipedia.org/wiki/Bottom_type),
-which is essentially an "error" type that has no states.
+Produces the [bottom type
+`⊥`](https://en.wikipedia.org/wiki/Bottom_type), which is essentially
+an "error" type that has no states.
 
 It can't be directly used by itself, in a [product
-expression](#multiplicative-expressions), nor in the base of a
-[map expression](#exponentiation-expressions) without being
-wrapped in some other context. You can think of these bad contexts as
-expressions that automatically propagate the error state, and other
-expressions as contexts that stop the error propagation.
+expression](#multiply-product-expressions), nor in the base of a [map
+expression](#exponentiate-map-expressions) without being wrapped in
+some other context. You can think of these bad contexts as expressions
+that automatically propagate the error state, and other expressions as
+contexts that stop the error propagation.
 
-Its main purpose is to reduce a [type set](#set-expressions), when a
-type in the set evaluates to `0` at runtime.
-
-### Unit expression
+#### Unit expression
 
 ```lisp
-:unit-type 1
+1
 ```
 
-Produces a [unit type](https://en.wikipedia.org/wiki/Unit_type), which
-only has one possible state, and therefore doesn't store any
-information.
+Produces the [unit type](https://en.wikipedia.org/wiki/Unit_type),
+which only has one possible state, and doesn't store any information.
 
-### Top expression
+### Label expressions
 
 ```lisp
-:top-type .
+:label 123
 ```
 
-Produces a [top type `⊤`](https://en.wikipedia.org/wiki/Top_type).
+Gives a name to the result of an expression.
 
-A top type is not quite a natural type... it's better to think of it
-as a [type superset](#set-expressions) that represents every possible
-natural type (eg. [ℕ](https://en.wikipedia.org/wiki/Natural_number)).
-
-It's actually just [syntax sugar](#top-expression-sugar) for any type that
-directly references itself.
-
-<!-- #### Lazy top expression -->
-
-<!-- TODO: Top expressions are greedy by default, we also need a lazy top -->
-<!-- expression. Is there some way we can generalize this idea, or is it -->
-<!-- just a hard-coded special case of a top-type? -->
-
-## Assertion expression
+### Reference expressions
 
 ```lisp
-:assert (= a b c)
+label
 ```
 
-Asserts that all arguments have the same number of possible states. If
-they do, this expressions evaluates to the last argument, otherwise it
-evaluates to [`0`](#bottom-expression).
+References a type by its label.
 
-<!-- ### Identity assertion type -->
+It's automatically labelled with the same name if it's not wrapped by
+a label expression.
+
+### Dereference expressions
+
+```lisp
+@label
+```
+
+Brings the runtime value bound to `label` into type-space.
+
+### Path expressions
+
+```lisp
+label:x:y:z
+(* :x (* :y (* :z 256))):x:y:z
+```
+
+References a type nested within another type.
+
+### Extended label expressions
+
+```
+'label'
+''label''
+'''label'''
+...
+```
+
+A way to define and reference a label that includes special
+characters. If you want to use the prefix/suffix quotes in the
+expression, you can always add another quote to the prefix & suffix.
+
+When used in label expressions, the first non-empty line will be
+interpreted as the label, and the following lines will be interpreted
+as the description:
+
+```lisp
+:''
+  pixel
+  A 24bit RGB pixel
+''
+(* :r 256 :g 256 :b 256)
+
+pixel
+```
+
+> **NOTE:** This means its impossible to define a multiline label
+
+### Unicode text expressions
+
+```
+"text"
+""text""
+"""text"""
+...
+```
+
+Syntax sugar to [assert](#assertion-expressions) for
+[Unicode](https://en.wikipedia.org/wiki/Unicode) text. This is used to
+define text-based grammars. If you want to use the prefix/suffix
+quotes in the expression, you can always add another quote to the
+prefix & suffix.
+
+Without an encoding context, text is interpreted as
+[UTF-8](https://en.wikipedia.org/wiki/UTF-8), but can be interpreted
+with a different encoding with text encoding macros:
+
+```lisp
+(=
+  (ascii-8 "text")
+  (ascii "text")
+)
+(ascii-7 "text")
+(utf-16 "text")
+(utf-32 "text")
+```
+
+Single-line text expressions are automatically labelled by their
+contents if not wrapped by a label expression.
+
+#### Char reference expression
+
+```lisp
+char
+```
+
+Represents a single Unicode
+[grapheme](https://en.wikipedia.org/wiki/Grapheme) for text in the
+current text encoding context. This can be dynamically sized.
+
+## Assertion expressions
+
+```lisp
+:equal (= a b c)
+```
+
+[Asserts](https://en.wikipedia.org/wiki/Assertion_(software_development))
+that all arguments have the same number of possible states. If they
+do, this evaluates to the last argument, otherwise it evaluates to
+[`0`](#bottom-expression).
+
+<!-- ### Identity assertion expression -->
 
 <!-- TODO: We need some way to do identity assertions to support type checking -->
 
 ## Additive expressions
 
+### Additive identity
+
+```lisp
+:additive-identity 0
+```
+
+The [additive
+identity](https://en.wikipedia.org/wiki/Additive_identity) is
+[`0`](#bottom-expression).
+
+### Add & sum expressions
+
 ```lisp
 :add (+ a b)
 ```
 
-Produces a [sum type `∑`](https://en.wikipedia.org/wiki/Tagged_union)
-between two natural expressions, which is either `a` or `b`. This adds
-together the number of possible states between the two types.
+Given natural inputs, produces a [sum type
+`∑`](https://en.wikipedia.org/wiki/Tagged_union), which is either `a`
+or `b`. This adds together the number of possible states between the
+two types.
+
+We derive a nary form of add `+` by repeated application of
+associativity:
+
+```lisp
+:additive-associativity
+(=
+  (+ (+ a b) c)
+  (+ a (+ b c)
+  (+ a b c)
+)
+```
+
+### Additive inverse expressions
 
 ```lisp
 :subtract (- a b)
@@ -544,28 +678,60 @@ together the number of possible states between the two types.
 Produces an [integer type `ℤ`](https://en.wikipedia.org/wiki/Integer)
 that subtracts the first few `b` states from `a`.
 
-`add` expressions are generalized into `sum` expressions through
-associativity. See [sum sugar](#sum-sugar).
+Combined with the additive identity `0`, we derive a unary form of
+subtract `-`:
 
-A "unary inverse" is defined by the [identity
-`0`](#bottom-expression), and the binary inverse `-`. See [additive
-inverse sugar](#additive-inverse-sugar).
+```lisp
+:negative
+(=
+  (- 0 x)
+  (- x)
+)
+```
 
-> Additive expressions form an [albeian
-> group](https://en.wikipedia.org/wiki/Abelian_group) in type-space,
-> and a [non-albeian](https://en.wikipedia.org/wiki/Non-abelian_group)
-> group in value-space.
+### Additive group theory
+
+Additive expressions form an [abelian
+group](https://en.wikipedia.org/wiki/Abelian_group) in type-space, and
+a [non-abelian](https://en.wikipedia.org/wiki/Non-abelian_group) group
+in value-space.
 
 ## Multiplicative expressions
+
+### Multiplicative identity
+
+```lisp
+:multiplicative-identity 1
+```
+
+The [multiplicative
+identity](https://en.wikipedia.org/wiki/Multiplicative_identity) is
+[`1`](#unit-expression).
+
+### Multiply & product expressions
 
 ```lisp
 :multiply (* a b)
 ```
 
-Produces a [product type
-`Π`](https://en.wikipedia.org/wiki/Product_type) between two natural
-expressions, which has both `a` and `b`. This multiplies the number of
-possible states between the two types.
+Given natural inputs, produces a [product type
+`Π`](https://en.wikipedia.org/wiki/Product_type), which has both `a`
+and `b`. This multiplies the number of possible states between the two
+types.
+
+We derive a nary form of multiply `*` by repeated application of
+associativity:
+
+```lisp
+:multiplicative-associativity
+(=
+  (* (* a b) c)
+  (* a (* b c))
+  (* a b c)
+)
+```
+
+### Multiplicative inverse expressions
 
 ```lisp
 :divide (/ a b)
@@ -575,157 +741,261 @@ Produces a [rational type
 `ℚ`](https://en.wikipedia.org/wiki/Rational_number) type that divides
 `b` states out of `a`.
 
-`multiply` expressions are generalized into `product` expressions
-through associativity. See [product sugar](#product-sugar).
+Combined with the multiplicative identity `1`, we derive a unary form
+of divide `/`:
 
-A "unary inverse" is defined by the [identity `1`](#unit-expression),
-and the binary inverse `/`. See [multiplicative inverse
-sugar](#multiplicative-inverse-sugar).
+```lisp
+:inverse
+(=
+  (/ 1 x)
+  (/ x)
+)
+```
 
-> Multiplicative expressions form an [albeian
-> group](https://en.wikipedia.org/wiki/Abelian_group) in type-space,
-> and a [non-albeian](https://en.wikipedia.org/wiki/Non-abelian_group)
-> group in value-space.
+### Multiplicative group theory
+
+Multiplicative expressions form an [abelian
+group](https://en.wikipedia.org/wiki/Abelian_group) in type-space, and
+a [non-abelian](https://en.wikipedia.org/wiki/Non-abelian_group) group
+in value-space.
 
 ## Exponentiation expressions
+
+### Exponentiate & map expressions
 
 ```lisp
 :exponentiate (^ b e)
 ```
 
-Produces a [map type
-`→`](https://en.wikipedia.org/wiki/Associative_array) between two
-natural expressions, which map the exponent `e` to the base `b`. This
-raises the number of possible states in `b` by the number of possible
-states in `e`.
+Given natural inputs, produces a [map type
+`→`](https://en.wikipedia.org/wiki/Associative_array), which maps the
+exponent `e` to the base `b`. This raises the number of possible
+states in `b` to the power of the number of possible states in `e`.
+
+Exponentiation is non-associative, but we derive a nary form of
+exponentiate `^` through
+[currying](https://en.wikipedia.org/wiki/Currying). Which is just
+repeated application of the [power of a power
+identity](https://en.wikipedia.org/wiki/Exponentiation#Identities_and_properties):
 
 ```lisp
-:root (root a b)
+:power-of-a-power-identity
+(=
+  (^ (^ a b) c)
+  (^ a (* b c))
+  (^ a b c)
+)
 ```
 
-<!-- TODO: description -->
-<!-- ["complex" ℂ](https://en.wikipedia.org/wiki/Complex_number) -->
+### Exponentiation left inverse expression
 
 ```lisp
-:logarithm (log a b)
+:logarithm (log b x)
 ```
 
-<!-- TODO: description, also should the argument order reversed? log_b a? -->
+Produces a [complex type
+ℂ](https://en.wikipedia.org/wiki/Complex_number), which treats `x`
+like a map type (even if it's not), and computes the exponent `e`
+given the base `b`.
 
-Exponentiation is non-associative, but `exponentiate` expressions are
-generalized into `map` expressions through
-[currying](https://en.wikipedia.org/wiki/Currying). See [map
-sugar](#map-sugar).
+### Exponentiation right inverse expression
 
-> Exponentiation expressions form a
-> [quasigroup](https://en.wikipedia.org/wiki/Quasigroup) in both
-> type-space & value-space. `root` is considered the "left division"
-> and `log` is considered the "right division".
+```lisp
+:root (root x e)
+```
 
-# Set expressions
+Produces a [complex type
+ℂ](https://en.wikipedia.org/wiki/Complex_number), which treats `x`
+like a map type (even if it's not), and computes the base `b` given
+the exponent `e`.
 
-Set expressions are used to create type sets. Type sets let you
-interpret a single value as multiple different types. This is
-particularly useful when you don't actually know what the type is, but
-the type can be deduced by its contents.
+`root` is actually just syntax sugar for exponentiation with a
+multiplicative inverse:
 
-## Union expression
+```lisp
+:root
+(=
+  (^ x (/ e))
+  (root x e)
+)
+```
+
+### Exponentiation group theory
+
+Exponentiation expressions form a
+[quasigroup](https://en.wikipedia.org/wiki/Quasigroup) in both
+type-space & value-space.
+
+## Set expressions
+
+Sets let you interpret a single value as multiple different
+types. This is particularly useful when you don't actually know what
+the type is, but the type can be deduced by its contents.
+
+### Singletons
+
+All types are implicitly treated as
+[singletons](https://en.wikipedia.org/wiki/Singleton_(mathematics)). These
+are sets with exactly one type.
+
+### Empty set expression
+
+```lisp
+:empty-set ()
+```
+
+Produces the [empty set](https://en.wikipedia.org/wiki/Empty_set). A
+set with no types.
+
+#### Top expression
+
+```lisp
+:top-type .
+```
+
+Produces what is called a [top type
+`⊤`](https://en.wikipedia.org/wiki/Top_type), but it's not exactly a
+"type". It's a set containing every possible natural type
+(eg. [ℕ](https://en.wikipedia.org/wiki/Natural_number)).
+
+`.` is actually just syntax sugar for any type that directly
+[references](#reference-expressions) itself:
+
+```lisp
+:. .
+```
+
+### Union expressions
 
 ```lisp
 :union (| a b)
 ```
 
-## Difference expression
+Produces a set which takes the
+[union](https://en.wikipedia.org/wiki/Union_(set_theory)) between `a`
+and `b`.
+
+We derive an nary form of union `|` by repeated application of
+associativity:
 
 ```lisp
-:difference (\ a b)
+:union-associativity
+(|
+  (| (| a b) c)
+  (| a (| b c)
+  (| a b c)
+)
 ```
 
-# Intersection expression
+#### Zero or one expression
+
+```lisp
+?
+```
+
+Syntax sugar for the [union `|`](#union-expressions) between
+[`0`](#bottom-expression) and [`1`](#unit-expression):
+
+```lisp
+:? (| 0 1)
+```
+
+### Symmetric difference expression
+
+```lisp
+:symmetric-difference (~ a b)
+```
+
+Produces a set which takes the [symmetric
+difference](https://en.wikipedia.org/wiki/Symmetric_difference)
+between `a` and `b`.
+
+symmetric-difference `~` is actually just syntax sugar for the union
+`|` of both relative complements `!`:
+
+```lisp
+(=
+  (| (! a b) (! b a))
+  (~ a b)
+)
+```
+
+### Intersection expressions
 
 ```lisp
 :intersection (& a b)
 ```
 
-# Range expression
+Produces a set which takes the
+[intersection](https://en.wikipedia.org/wiki/Intersection_(set_theory))
+between `a` and `b`.
+
+We derive an nary form of intersection `&` by repeated application of
+associativity:
 
 ```lisp
-:range (.. a b)
+:intersection-associativity
+(&
+  (& (& a b) c)
+  (& a (& b c)
+  (& a b c)
+)
 ```
 
-# Type expressions
-
-<!-- wow cool! -->
-
-# Symbolic expressions
-
-Symbols are any sequence of characters that don't contain whitespace
-` ` or parenthesis `()`*. Inside the context of a symbol, arie defines a
-domain specific language called symbolic expressions.
-
-> \* [Escape expressions](#escape-expression) can include spaces and
-> parenthesis and are still treated as a single symbol
-
-## Natural literals
+### Complement expressions
 
 ```lisp
-42
+:relative-complement (! a b)
 ```
 
-## Label expression
+Produces a set which takes the [relative
+complement](https://en.wikipedia.org/wiki/Complement_(set_theory)#Relative_complement)
+of `a` in `b`.
+
+Combined with the top type `.`, we derive a unary form of
+relative-complement `!`:
 
 ```lisp
-:my-type 1
+:complement
+(=
+  (! x .)
+  (! x)
+)
 ```
 
-Gives a name to the result of an expression
+which can also be combined with [`0`](#bottom-expression) as syntax
+sugar for the complement of [`0`](#bottom-expression):
 
-## Reference expression
+#### One or more expression
 
 ```lisp
-:my-type 2
-
-my-type
+:one-or-more
+(=
+  (! 0)
+  !)
 ```
 
-References another type by its label
+Syntax sugar for the [complement `!`](#complement-expressions) of
+[`0`](#bottom-expression):
 
-## Path expression
+### Interval expression
 
 ```lisp
-:my-type (* :x 256 (* :y 256  (* :z 256)))
-
-my-type:x:y:z
+:interval (.. a b)
 ```
 
-References a type nested within another type:
+Produces a half-open
+[interval](https://en.wikipedia.org/wiki/Interval_(mathematics))
+between `a` & `b`, where `b` is excluded.
 
-## Dereference expression
+Combined with the empty set `()`, we derive a unary form of interval
+`..`:
 
 ```lisp
-@symbol
-```
-
-Brings the runtime value associated with a type into type-space
-
-## Escape expressions
-
-### Symbol escape expression
-
-```
-'symbol'
-''symbol''
-'''symbol'''
-...
-```
-
-### String escape expression
-
-```
-"string"
-""string""
-"""string"""
-...
+(=
+  (.. () b)
+  (.. b)
+)
 ```
 
 <!-- ## Scoping -->
@@ -733,134 +1003,6 @@ Brings the runtime value associated with a type into type-space
 <!-- (scope) -->
 
 <!-- Self referencing has to be possible, how can we refer to something with the same name in the parent scope? -->
-
-# Syntax Sugar
-
-## Additive expression sugar
-
-### Sum sugar
-
-```lisp
-:sum
-(=
-  (+ (+ a b) c)
-  (+ a (+ b c)
-  (+ a b c))
-```
-
-### Additive identity sugar
-
-```lisp
-:additive-identity
-(=
-  1
-  (* x (/ x)))
-```
-
-### Additive inverse sugar
-
-```lisp
-:additive-inverse
-(=
-  (- 0 x)
-  (- x))
-```
-
-## Multiplicative expression sugar
-
-### Product sugar
-
-```lisp
-:product
-(=
-  (* (* a b) c)
-  (* a (* b c))
-  (* a b c))
-```
-
-### Multiplicative identity sugar
-
-```lisp
-:multiplicative-identity
-(=
-  1
-  (* x (/ x)))
-```
-
-### Multiplicative inverse sugar
-
-```lisp
-:multiplicative-inverse
-(=
-  (/ 1 x)
-  (/ x))
-```
-
-## Exponentiation expression sugar
-
-### Map sugar
-
-```lisp
-:map
-(=
-  (^ a b c)
-  (^ a (* b c)))
-```
-
-### Root sugar
-
-```lisp
-:root
-(=
-  (^ a (/ b))
-  (root a b))
-```
-
-### Imaginary expression sugar
-
-```lisp
-:i (root -1 2)
-```
-
-## Top expression sugar
-
-```lisp
-:x x
-:. x
-```
-
-## Zero or one sugar
-
-```lisp
-:? (| 0 1)
-```
-
-Syntax sugar for the [union `|`](#union) between
-[`0`](#bottom-expression) and [`1`](#unit-expression).
-
-## One or more sugar
-
-```lisp
-:! (\ . 0)
-```
-
-Syntax sugar for [`.`](#top-expression), without [`0`](#bottom-expression).
-
-## Strings
-
-```lisp
-"string"
-```
-
-```lisp
-char
-```
-
-```lisp
-(utf-8 "string")
-(utf-16 "string")
-(utf-32 "string")
-```
 
 <!-- What does it mean to call a type? -->
 <!-- - Does it mean to project a subset? -->
