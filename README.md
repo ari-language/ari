@@ -188,7 +188,7 @@ or
 <td>
 
 ```lisp
-char
+codepoint
 ```
 
 </td>
@@ -609,10 +609,20 @@ with a different encoding with text encoding macros:
 Single-line text expressions are automatically labelled by their
 contents if not wrapped by a label expression.
 
-#### Char reference expression
+#### Codepoint reference expression
 
 ```lisp
-char
+codepoint
+```
+
+Represents a single Unicode [code
+point](https://en.wikipedia.org/wiki/Code_point) for text in the
+current text encoding context. This can be dynamically sized.
+
+#### Grapheme reference expression
+
+```lisp
+grapheme
 ```
 
 Represents a single Unicode
