@@ -1,6 +1,6 @@
 # ari
 
-<img src="/ari.png" width="128px" height="128px">
+<img src="ari.png" width="128px" height="128px">
 
 A type-centred [purely functional
 programming](https://en.wikipedia.org/wiki/Purely_functional_programming)
@@ -30,7 +30,7 @@ A command line tool to query components of a file using ari types.
 ### aric
 
 A command line tool to compile ari types into other languages using
-[ari map types](#exponentiate-map-expressions).
+[ari map types](#exponentiate-and-map-expressions).
 
 ### arid
 
@@ -370,7 +370,7 @@ you can precisely type the number of states using the `3` type:
 The possible values of this type are `0`, `1`, `2`, which you can use
 to represent `small`, `medium`, `large`. This is a powerful concept,
 but this small example doesn't fit with the main goal of ari, to make
-things more accessible.
+binary data more accessible.
 
 ...this is exactly where algebraic expressions & labels come in! You
 can break down and label the individual states of a `3` type with a
@@ -400,13 +400,13 @@ smaller numbers... and label them 🙂.
 > natural type, which allows for a level of precision not possible in
 > other type systems.
 
-## Value bindings & dependant types
+## Value bindings and dependant types
 
 In ari all types have an implicit binding with a corresponding runtime
-value. [`@`](#dereference-expression) can be used on a type to bring
+value. [`@`](#dereference-expressions) can be used on a type to bring
 this implicitly bound value from "value-space" into "type-space".
 
-Here's an example where [`@`](#dereference-expression) is used to help
+Here's an example where [`@`](#dereference-expressions) is used to help
 describe an 24-bit RGB colour image will a dynamically sized `width` &
 `height`:
 
@@ -429,7 +429,7 @@ This concept, along with the fact that ari is [purely
 functional](https://en.wikipedia.org/wiki/Functional_programming),
 blurs the line between compile time and runtime. Expressions are
 usually evaluated at compile time, unless they contain a type
-dereferenced with [`@`](#dereference-expression).
+dereferenced with [`@`](#dereference-expressions).
 
 ## Labels are optional, but you can also label anything
 
@@ -478,8 +478,8 @@ Language Inspirations:
   is not a lisp, homoiconicity, functional-focused)
 - [Rust](https://www.rust-lang.org) (sum types & other algebraic
   types)
-- [Nix](https://nixos.org/manual/nix/stable/introduction.html) (purely
-  functional, lazily evaluated, currying)
+- [Nix](https://nixos.org/manual/nix/stable/expressions/expression-language.html)
+  (purely functional, lazily evaluated, currying)
 - [Haskell](https://www.haskell.org) (indirectly through Rust & Nix +
   monads)
 
@@ -517,11 +517,11 @@ Produces the [bottom type
 an "error" type that has no states.
 
 It can't be directly used by itself, in a [product
-expression](#multiply-product-expressions), nor in the base of a [map
-expression](#exponentiate-map-expressions) without being wrapped in
-some other context. You can think of these bad contexts as expressions
-that automatically propagate the error state, and other expressions as
-contexts that stop the error propagation.
+expression](#multiply-and-product-expressions), nor in the base of a [map
+expression](#exponentiate-and-map-expressions) without being wrapped
+in some other context. You can think of these bad contexts as
+expressions that automatically propagate the error state, and other
+expressions as contexts that stop the error propagation.
 
 #### Unit expression
 
@@ -676,7 +676,7 @@ The [additive
 identity](https://en.wikipedia.org/wiki/Additive_identity) is
 [`0`](#bottom-expression).
 
-### Add & sum expressions
+### Add and sum expressions
 
 ```lisp
 :add (+ a b)
@@ -738,7 +738,7 @@ The [multiplicative
 identity](https://en.wikipedia.org/wiki/Multiplicative_identity) is
 [`1`](#unit-expression).
 
-### Multiply & product expressions
+### Multiply and product expressions
 
 ```lisp
 :multiply (* a b)
@@ -791,7 +791,7 @@ in value-space.
 
 ## Exponentiation expressions
 
-### Exponentiate & map expressions
+### Exponentiate and map expressions
 
 ```lisp
 :exponentiate (^ b e)
@@ -877,7 +877,7 @@ are sets with exactly one type.
 Produces the [empty set](https://en.wikipedia.org/wiki/Empty_set). A
 set with no types.
 
-#### Top expression
+### Top expression
 
 ```lisp
 :top-type .
@@ -910,7 +910,7 @@ associativity:
 
 ```lisp
 :union-associativity
-(|
+(=
   (| (| a b) c)
   (| a (| b c)
   (| a b c)
@@ -965,7 +965,7 @@ associativity:
 
 ```lisp
 :intersection-associativity
-(&
+(=
   (& (& a b) c)
   (& a (& b c)
   (& a b c)
@@ -992,9 +992,6 @@ relative-complement `!`:
   (! x)
 )
 ```
-
-which can also be combined with [`0`](#bottom-expression) as syntax
-sugar for the complement of [`0`](#bottom-expression):
 
 #### One or more expression
 
