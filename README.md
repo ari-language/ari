@@ -1032,6 +1032,50 @@ Combined with the empty set `()`, we derive a unary form of interval
 
 <!-- Self referencing has to be possible, how can we refer to something with the same name in the parent scope? -->
 
+# License
+
+Copyright (C) 2022 Kira Bruneau
+
+This program is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 3 of the License, or (at
+your option) any later version.
+
+This program is distributed in the hope that it will be useful, but
+WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with this program. If not, see <https://www.gnu.org/licenses/>.
+
+## Why is this licensed under the GPL instead of the LGPL?
+
+This was a difficult decision. By licensing this under the GPL, not
+only are we preventing proprietary software from being combined with
+ari, but also open source software using a license that's incompatible
+with the GPL.
+
+This restriction may _seem_ to go against our goal of making binary
+data more open & accessible, but it very much works in favour of it.
+
+Proprietary software is designed to restrict the freedoms of its users
+for profit. By allowing ari to be used in proprietary software, we'd
+be perpetuating the idea that software should be hard to access &
+modify. This is exactly what we don't want.
+
+This doesn't mean that users are restricted from using ari along side
+proprietary software. The GPL is designed in a way to take away
+freedoms from developers, and give as many freedoms as possible back
+to users.
+
+This license just requires that proprietary (or open source software
+with a license allowing for integration with proprietary software)
+can't be built on top of, or packaged together with ari.
+
+See [why you shouldn't use the Lesser GPL for your next
+library](https://www.gnu.org/licenses/why-not-lgpl.html).
+
 <!-- What does it mean to call a type? -->
 <!-- - Does it mean to project a subset? -->
 <!-- - Does it mean to map from one type to another? -->
