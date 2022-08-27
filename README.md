@@ -1,4 +1,4 @@
-# arie
+# ari
 
 A type-centred [purely functional
 programming](https://en.wikipedia.org/wiki/Purely_functional_programming)
@@ -9,34 +9,51 @@ language designed to type binary files.
 ## To make binary files more accessible
 
 Most binary files require specially designed tools to read & write,
-but arie types are designed so that you can decompose any binary file
+but ari types are designed so that you can decompose any binary file
 down into its component parts. The language is intended to be a
-foundation for other tools to build on top of. Some of the tools we
-plan on building with arie include:
+foundation for other tools to build on top of.
 
-- [ ] A tool to query values in a binary file using arie types
-- [ ] An editor specially designed to edit binary files using arie types
-  - Including plugins to existing text editors
-- [ ] A diff tool that structurally compares files of the same type
-- [ ] A compression tool that compresses binary data with arie types
-  - Arie's type system is designed to be a guide for [arithmetic
-    coding](https://en.wikipedia.org/wiki/Arithmetic_coding) - it's
-    partially where the name comes from (**ari**thmetic
-    **e**ncoding/**e**ditor)
+Some of the tools we plan on building with ari include:
+
+### arie
+
+An editor specially designed to edit files using ari types.
+
+We'll also build plugins for existing text editors.
+
+### ariq
+
+A command line tool to query components of a file using ari types.
+
+### aric
+
+A command line tool to compile ari types into other languages using
+[ari map types](#exponentiate-map-expressions).
+
+### arid
+
+A command line tool to structurally diff files of the same ari type.
+
+### ariz
+
+A command line tool to compress files & directories using ari types.
+
+Ari's type system is designed to act as a guide for [arithmetic
+coding](https://en.wikipedia.org/wiki/Arithmetic_coding).
 
 ## ... but also, not just binary formats
 
-While the primary focus is to help interpret binary data, arie is also
+While the primary focus is to help interpret binary data, ari is also
 designed to model grammars for text-based languages.
 
 Here is a quick comparison of how some formal language concepts map
-into arie:
+into ari:
 
 > **NOTE:** This comparison is meant for people who are already
 > familiar with these concepts.
 >
 > If you want to get a better understanding of what they mean, or what
-> the arie equivalents mean, see the [language
+> the ari equivalents mean, see the [language
 > reference](#language-reference).
 
 <table>
@@ -44,7 +61,7 @@ into arie:
 
 <td>
 <table>
-<tr><th>Regex</th><th>Arie</th></tr>
+<tr><th>Regex</th><th>Ari</th></tr>
 
 <tr>
 <td>
@@ -199,7 +216,7 @@ codepoint
 
 <td>
 <table>
-<tr><th>Backus–Naur form</th><th>Arie</th></tr>
+<tr><th>Backus–Naur form</th><th>Ari</th></tr>
 
 <tr>
 <td>
@@ -258,17 +275,17 @@ non-terminal
 </tr>
 </table>
 
-# What makes arie unique?
+# What makes ari unique?
 
 ## Types are the main focus of the language
 
-In arie, everything is a type. Types and type expressions are the
+In ari, everything is a type. Types and type expressions are the
 primary focus of the language. You can add, multiply, and even
 exponentiate types, much like you can a number in any other
 programming language.
 
 <table>
-<tr><th>Arie type expressions</th><th>Equivalent types</th></tr>
+<tr><th>Ari type expressions</th><th>Equivalent types</th></tr>
 
 <tr>
 <td>
@@ -335,13 +352,13 @@ See the [language reference](#language-reference)
 
 ## Generalizes the idea of primitive types
 
-In arie, there are infinitely many primitives types generalized by a
+In ari, there are infinitely many primitives types generalized by a
 single concept, [natural
 numbers](https://en.wikipedia.org/wiki/Natural_number). We call these
 primitive types [natural types](#natural-expressions).
 
 ...well what exactly does this mean? Say you want to create a `size`
-type that has 3 possible states, `small`, `medium`, `large`. In arie,
+type that has 3 possible states, `small`, `medium`, `large`. In ari,
 you can precisely type the number of states using the `3` type:
 
 ```lisp
@@ -350,7 +367,7 @@ you can precisely type the number of states using the `3` type:
 
 The possible values of this type are `0`, `1`, `2`, which you can use
 to represent `small`, `medium`, `large`. This is a powerful concept,
-but this small example doesn't fit with the main goal of arie, to make
+but this small example doesn't fit with the main goal of ari, to make
 things more accessible.
 
 ...this is exactly where algebraic expressions & labels come in! You
@@ -370,23 +387,22 @@ the `3` type:
 - `medium` = `1`
 - `large` = `2`
 
-The whole idea of arie is that binary data can be interpreted as one
+The whole idea of ari is that binary data can be interpreted as one
 giant number, and we provide ways to break big numbers down into
 smaller numbers... and label them 🙂.
 
 > **NOTE:** Many other languages can partially model the idea of sum
 > types with "enums". The main issue though is enums are often
 > "rounded" to the best matching primitive type(s) (usually some kind
-> of int type). In arie every possible sum type has an equivalent
+> of int type). In ari every possible sum type has an equivalent
 > natural type, which allows for a level of precision not possible in
 > other type systems.
 
 ## Value bindings & dependant types
 
-In arie all types have an implicit binding with a corresponding
-runtime value. [`@`](#dereference-expression) can be used on a type to
-bring this implicitly bound value from "value-space" into
-"type-space".
+In ari all types have an implicit binding with a corresponding runtime
+value. [`@`](#dereference-expression) can be used on a type to bring
+this implicitly bound value from "value-space" into "type-space".
 
 Here's an example where [`@`](#dereference-expression) is used to help
 describe an 24-bit RGB colour image will a dynamically sized `width` &
@@ -407,7 +423,7 @@ describe an 24-bit RGB colour image will a dynamically sized `width` &
 )
 ```
 
-This concept, along with the fact that arie is [purely
+This concept, along with the fact that ari is [purely
 functional](https://en.wikipedia.org/wiki/Functional_programming),
 blurs the line between compile time and runtime. Expressions are
 usually evaluated at compile time, unless they contain a type
@@ -422,7 +438,7 @@ eg. `functions ↔ lambdas`, `structs ↔ tuples`... Often there isn't an
 unnamed alternative. You'll be forced to decouple & name things even
 when an inlined alternative would be easier to understand.
 
-Arie takes a fundamentally different approach. Any expression can be
+Ari takes a fundamentally different approach. Any expression can be
 inlined without labelling, but also, all expressions can be labelled.
 
 This gives developers flexibility to do whatever makes the most
@@ -434,9 +450,9 @@ parent.
 
 When you can label everything, anything can be a module.
 
-# What ideas does arie steal?
+# What ideas does ari steal?
 
-Arie steals a bunch of good ideas from various places:
+Ari steals a bunch of good ideas from various places:
 
 Academic Inspirations:
 - [Type theory](https://en.wikipedia.org/wiki/Type_theory) &
@@ -454,7 +470,7 @@ Academic Inspirations:
 
 Language Inspirations:
 - [Lisp](https://en.wikipedia.org/wiki/Lisp_(programming_language))
-  ([s-expressions](https://en.wikipedia.org/wiki/S-expression) - arie
+  ([s-expressions](https://en.wikipedia.org/wiki/S-expression) - ari
   is not a lisp, homoiconicity, functional-focused)
 - [Rust](https://www.rust-lang.org) (sum types & other algebraic
   types)
@@ -467,8 +483,8 @@ Language Inspirations:
 
 ## Syntactic expressions
 
-Syntactic expressions are the base expressions of arie. They are
-defined without parenthesis, in contrast to the [symbolic
+Syntactic expressions are the base expressions of the language. They
+are defined without parenthesis, in contrast to the [symbolic
 expressions](https://en.wikipedia.org/wiki/S-expression).
 
 Anything that's a syntactic expression is designed that way to reduce
