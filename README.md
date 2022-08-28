@@ -987,7 +987,7 @@ Produces what is called a [top type
 (eg. [ℕ](https://en.wikipedia.org/wiki/Natural_number)).
 
 `.` is actually just syntax sugar for any type that directly
-[references](#reference-expressions) itself:
+references itself:
 
 ```lisp
 :. .
