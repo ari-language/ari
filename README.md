@@ -572,24 +572,31 @@ References a type nested within another type.
 
 ```
 'label'
-''label''
 '''label'''
 ...
 ```
 
 A way to define and reference a label that includes special
-characters. If you want to use the prefix/suffix quotes in the
-expression, you can always add another quote to the prefix & suffix.
+characters.
+
+If you want to use the prefix/suffix quotes in the expression, you can
+always add another 2 quotes to the prefix & suffix. The number of
+quotes are required to be odd, so you can embed quoted labels as a
+special case:
+
+```
+''text''
+```
 
 When used in label expressions, the first non-empty line will be
 interpreted as the label, and the following lines will be interpreted
 as the description:
 
 ```lisp
-:''
+:'''
   pixel
   A 24bit RGB pixel
-''
+'''
 (* :r 256 :g 256 :b 256)
 
 pixel
@@ -601,16 +608,22 @@ pixel
 
 ```
 "text"
-""text""
 """text"""
 ...
 ```
 
 Syntax sugar to [assert](#assertion-expressions) for
 [Unicode](https://en.wikipedia.org/wiki/Unicode) text. This is used to
-define text-based grammars. If you want to use the prefix/suffix
-quotes in the expression, you can always add another quote to the
-prefix & suffix.
+define text-based grammars.
+
+If you want to use the prefix/suffix quotes in the expression, you can
+always add another 2 quotes to the prefix & suffix. The number of
+quotes are required to be odd, so you can embed quoted text as a
+special case:
+
+```
+""text""
+```
 
 Without an encoding context, text is interpreted as
 [UTF-8](https://en.wikipedia.org/wiki/UTF-8), but can be interpreted
