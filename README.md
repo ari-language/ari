@@ -1,5 +1,7 @@
 # ari
 
+<img src="/ari.png" width="128px" height="128px">
+
 A type-centred [purely functional
 programming](https://en.wikipedia.org/wiki/Purely_functional_programming)
 language designed to type binary files.
