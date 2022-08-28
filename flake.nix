@@ -15,6 +15,13 @@
         } // packages;
 
         packages.default = pkgs.callPackage ./nix/packages/ari.nix { };
+
+        devShells.default = packages.default.overrideAttrs (attrs: {
+          checkInputs = with pkgs; [
+            nodePackages.prettier
+            nodePackages.markdown-link-check
+          ];
+        });
       }
     );
 }
