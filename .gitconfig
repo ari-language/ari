@@ -1,0 +1,15 @@
+# git config include.path ../.gitconfig
+[remote "gitlab"]
+	url = https://gitlab.com/ari-lang/ari.git
+	fetch = +refs/heads/*:refs/remotes/gitlab/*
+	fetch = +refs/merge-requests/*/head:refs/pullreqs/*
+[remote "github"]
+	url = https://github.com/ari-language/ari.git
+	fetch = +refs/heads/*:refs/remotes/github/*
+[remote "all"]
+	url = https://gitlab.com/ari-lang/ari.git
+	fetch = +refs/heads/*:refs/remotes/all/*
+	pushurl = git@gitlab.com:ari-lang/ari.git
+	pushurl = git@github.com:ari-language/ari.git
+[remote]
+	pushDefault = all
