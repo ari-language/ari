@@ -316,12 +316,12 @@ programming language.
 <td>
 
 - [record, struct,
-  tuple](https://en.wikipedia.org/wiki/Record_(computer_science))
-- [class](https://en.wikipedia.org/wiki/Class_(computer_programming))
-- [trait](https://en.wikipedia.org/wiki/Trait_(computer_programming))
+  tuple](<https://en.wikipedia.org/wiki/Record_(computer_science)>)
+- [class](<https://en.wikipedia.org/wiki/Class_(computer_programming)>)
+- [trait](<https://en.wikipedia.org/wiki/Trait_(computer_programming)>)
 - [concept,
-  interface](https://en.wikipedia.org/wiki/Concept_(generic_programming))
-- [protocol](https://en.wikipedia.org/wiki/Protocol_(object-oriented_programming))
+  interface](<https://en.wikipedia.org/wiki/Concept_(generic_programming)>)
+- [protocol](<https://en.wikipedia.org/wiki/Protocol_(object-oriented_programming)>)
 
 </td>
 </tr>
@@ -342,7 +342,7 @@ programming language.
   dictionary](https://en.wikipedia.org/wiki/Associative_array)
 - [array type](https://en.wikipedia.org/wiki/Array_data_type)
 - [stack](https://en.wikipedia.org/wiki/Stack_%28abstract_data_type%29)
-- [matrix](https://en.wikipedia.org/wiki/Matrix_(mathematics))
+- [matrix](<https://en.wikipedia.org/wiki/Matrix_(mathematics)>)
 - [vector space](https://en.wikipedia.org/wiki/Vector_space)
 - [tensor](https://en.wikipedia.org/wiki/Tensor)
 
@@ -457,6 +457,7 @@ When you can label everything, anything can be a module.
 Ari steals a bunch of good ideas from various places:
 
 Academic Inspirations:
+
 - [Type theory](https://en.wikipedia.org/wiki/Type_theory) &
   [algebraic types](https://en.wikipedia.org/wiki/Algebraic_data_type)
 - [Group theory](https://en.wikipedia.org/wiki/Group_theory)
@@ -471,7 +472,8 @@ Academic Inspirations:
 - [Homoiconicity](https://en.wikipedia.org/wiki/Homoiconicity)
 
 Language Inspirations:
-- [Lisp](https://en.wikipedia.org/wiki/Lisp_(programming_language))
+
+- [Lisp](<https://en.wikipedia.org/wiki/Lisp_(programming_language)>)
   ([s-expressions](https://en.wikipedia.org/wiki/S-expression) - ari
   is not a lisp, homoiconicity, functional-focused)
 - [Rust](https://www.rust-lang.org) (sum types & other algebraic
@@ -653,7 +655,7 @@ current text encoding context. This can be dynamically sized.
 :equal (= a b c)
 ```
 
-[Asserts](https://en.wikipedia.org/wiki/Assertion_(software_development))
+[Asserts](<https://en.wikipedia.org/wiki/Assertion_(software_development)>)
 that all arguments have the same number of possible states. If they
 do, this evaluates to the last argument, otherwise it evaluates to
 [`0`](#bottom-expression).
@@ -863,7 +865,7 @@ the type is, but the type can be deduced by its contents.
 ### Singletons
 
 All types are implicitly treated as
-[singletons](https://en.wikipedia.org/wiki/Singleton_(mathematics)). These
+[singletons](<https://en.wikipedia.org/wiki/Singleton_(mathematics)>). These
 are sets with exactly one type.
 
 ### Empty set expression
@@ -900,7 +902,7 @@ Produces what is called a [top type
 ```
 
 Produces a set which takes the
-[union](https://en.wikipedia.org/wiki/Union_(set_theory)) between `a`
+[union](<https://en.wikipedia.org/wiki/Union_(set_theory)>) between `a`
 and `b`.
 
 We derive an nary form of union `|` by repeated application of
@@ -955,7 +957,7 @@ symmetric-difference `~` is actually just syntax sugar for the union
 ```
 
 Produces a set which takes the
-[intersection](https://en.wikipedia.org/wiki/Intersection_(set_theory))
+[intersection](<https://en.wikipedia.org/wiki/Intersection_(set_theory)>)
 between `a` and `b`.
 
 We derive an nary form of intersection `&` by repeated application of
@@ -977,7 +979,7 @@ associativity:
 ```
 
 Produces a set which takes the [relative
-complement](https://en.wikipedia.org/wiki/Complement_(set_theory)#Relative_complement)
+complement](<https://en.wikipedia.org/wiki/Complement_(set_theory)#Relative_complement>)
 of `a` in `b`.
 
 Combined with the top type `.`, we derive a unary form of
@@ -1013,7 +1015,7 @@ Syntax sugar for the [complement `!`](#complement-expressions) of
 ```
 
 Produces a half-open
-[interval](https://en.wikipedia.org/wiki/Interval_(mathematics))
+[interval](<https://en.wikipedia.org/wiki/Interval_(mathematics)>)
 between `a` & `b`, where `b` is excluded.
 
 Combined with the empty set `()`, we derive a unary form of interval
@@ -1043,7 +1045,7 @@ your option) any later version.
 
 This program is distributed in the hope that it will be useful, but
 WITHOUT ANY WARRANTY; without even the implied warranty of
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
 General Public License for more details.
 
 You should have received a copy of the GNU General Public License
