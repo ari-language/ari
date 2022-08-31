@@ -370,13 +370,13 @@ you can precisely type the number of states using the `3` type:
 The possible values of this type are `0`, `1`, `2`, which you can use
 to represent `small`, `medium`, `large`. This is a powerful concept,
 but this small example doesn't fit with the main goal of ari, to make
-binary data more accessible.
+things more accessible.
 
-...this is exactly where algebraic expressions & labels come in! You
-can break down and label the individual states of a `3` type with a
-[sum expression](#additive-expressions). For example, this sum
-expression produces a sum type that "sums" to the same number of
-states as the `3` type:
+...this is exactly where [algebraic
+expressions](#algebraic-expressions) and [labels](#label-expressions)
+come in! You can break down and label the individual states of a `3`
+type with a [sum expression](#additive-expressions). For example, this
+sum expression produces a sum type that's equivalent to the `3` type:
 
 ```lisp
 :size (+ :small 1 :medium 1 :large 1)
@@ -403,12 +403,12 @@ smaller numbers... and label them 🙂.
 ## Value bindings and dependant types
 
 In ari all types have an implicit binding with a corresponding runtime
-value. [`@`](#dereference-expressions) can be used on a type to bring
-this implicitly bound value from "value-space" into "type-space".
+value. [Dereference expressions `@`](#dereference-expressions) can be
+used on a type to bring this value from "value-space" into
+"type-space".
 
-Here's an example where [`@`](#dereference-expressions) is used to help
-describe an 24-bit RGB colour image will a dynamically sized `width` &
-`height`:
+Here's an example where they're used to describe a 24-bit RGB colour
+image with a dynamically sized `width` & `height`:
 
 ```lisp
 :byte (^ :bit 2 :bit-length 8)
@@ -425,11 +425,14 @@ describe an 24-bit RGB colour image will a dynamically sized `width` &
 )
 ```
 
-This concept, along with the fact that ari is [purely
+In this example the `@width` and `@height` types are evaluated from
+the runtime value of `width` & `height`.
+
+Expressions are normally evaluated at compile time, but this pushes
+the evaluation to runtime. Ari can use the same expressions between
+compile time & runtime because it's [purely
 functional](https://en.wikipedia.org/wiki/Functional_programming),
-blurs the line between compile time and runtime. Expressions are
-usually evaluated at compile time, unless they contain a type
-dereferenced with [`@`](#dereference-expressions).
+meaning that expressions don't depend on any hidden state.
 
 ## Labels are optional, but you can also label anything
 
@@ -485,14 +488,10 @@ Language Inspirations:
 
 # Language reference
 
-## Syntactic expressions
+## Atomic expressions
 
-Syntactic expressions are the base expressions of the language. They
-are defined without parenthesis, in contrast to the [symbolic
-expressions](https://en.wikipedia.org/wiki/S-expression).
-
-Anything that's a syntactic expression is designed that way to reduce
-the syntax noise of parenthesis.
+These are the predefined base expressions of ari, they produce the
+"atoms" for [symbolic expressions](#symbolic-expressions).
 
 ### Natural expressions
 
@@ -502,7 +501,7 @@ the syntax noise of parenthesis.
 
 Produce the [primitive
 types](https://en.wikipedia.org/wiki/Primitive_data_type) of the
-language, which are based on [natural
+language, modelled after [natural
 numbers](https://en.wikipedia.org/wiki/Natural_number). Its "value"
 encodes the number of possible states that can exist in the type.
 
@@ -513,15 +512,41 @@ encodes the number of possible states that can exist in the type.
 ```
 
 Produces the [bottom type
-`⊥`](https://en.wikipedia.org/wiki/Bottom_type), which is essentially
-an "error" type that has no states.
+`⊥`](https://en.wikipedia.org/wiki/Bottom_type), which has no possible
+states. You can think of this as the "error type".
 
-It can't be directly used by itself, in a [product
-expression](#multiply-and-product-expressions), nor in the base of a [map
-expression](#exponentiate-and-map-expressions) without being wrapped
-in some other context. You can think of these bad contexts as
-expressions that automatically propagate the error state, and other
-expressions as contexts that stop the error propagation.
+This is the [identity
+type](https://en.wikipedia.org/wiki/Identity_element) for [sum
+expressions](#add-and-sum-expressions):
+
+```lisp
+(=
+  (+ x 0)
+  x
+)
+```
+
+There are certain contexts that propagate the bottom type:
+
+- [Product expressions](#multiply-and-product-expressions)
+- The base of [map expressions](#exponentiate-and-map-expressions)
+
+This "error propagation" can be "caught" by other expressions. For
+example:
+
+```lisp
+(+ 256 (* 256 0))
+```
+
+`(* 256 0)` evaluates to `0`, the bottom type, but `(+ 256 0)`
+evaluates to `256`... which is not the bottom type. This [sum
+expression](#add-and-sum-expressions) catches the error!
+
+This doesn't _seem_ useful when only working with natural expressions,
+why not just remove expressions that propagate the bottom type?
+Well.... types can also be evaluated at runtime with [dereference
+expressions `@`](#dereference-expressions), and we use this same idea
+to catch runtime errors.
 
 #### Unit expression
 
@@ -530,7 +555,19 @@ expressions as contexts that stop the error propagation.
 ```
 
 Produces the [unit type](https://en.wikipedia.org/wiki/Unit_type),
-which only has one possible state, and doesn't store any information.
+which has only one possible state. You can think of this as a type
+that doesn't actually store any information.
+
+This is the [identity
+type](https://en.wikipedia.org/wiki/Identity_element) for [product
+expressions](#add-and-sum-expressions):
+
+```lisp
+(=
+  (* x 1)
+  x
+)
+```
 
 ### Label expressions
 
@@ -538,58 +575,92 @@ which only has one possible state, and doesn't store any information.
 :label 123
 ```
 
-Gives a name to the result of an expression.
+Define a name for the result of an expression in the current scope.
 
-### Reference expressions
-
-```lisp
-label
-```
-
-References a type by its label.
-
-It's automatically labelled with the same name if it's not wrapped by
-a label expression.
-
-### Dereference expressions
+### Symbol expressions
 
 ```lisp
-@label
+symbol
 ```
 
-Brings the runtime value bound to `label` into type-space.
+Produce "symbol types", which are equivalent to whatever type is
+associated with `symbol` in the current scope.
+
+Symbols are implicitly labelled by their name when used once
+(unlabelled) within the same scope. This implicit label can be
+shadowed by explicit labels in the same scope.
+
+### Value expressions
+
+In ari, all types are implicitly bound to a corresponding runtime
+value. Value expressions are used to refer to these runtime values.
+
+They can only be used in:
+
+- [Product expressions](#multiply-and-product-expressions)
+- The base of [map expressions](#exponentiate-and-map-expressions)
+
+> **NOTE:** These are the same contexts that propagate the [bottom
+> type `0`](#bottom-expression).
+
+#### Reference expressions
+
+```lisp
+$symbol
+```
+
+Produce "reference types", which are bound to the same runtime value
+of `symbol`, but are equivalent to [`1`](#unit-expression).
+
+#### Dereference expressions
+
+```lisp
+@symbol
+```
+
+When applied to symbol types, produce a type from the runtime value of
+the symbol type.
+
+```lisp
+@123
+@(+ :small 1 :medium 1 :large)
+```
+
+When applied to non-symbol types, produce an "effective type" from the
+runtime value of the non-symbol type.
+
+"Effective types" don't have an associated runtime value.
 
 ### Path expressions
 
 ```lisp
-label:x:y:z
+symbol:x:y:z
 (* :x (* :y (* :z 256))):x:y:z
 ```
 
-References a type nested within another type.
+Produce a nested type contained within another type.
 
-### Extended label expressions
+### Extended symbol expressions
 
 ```
-'label'
-'''label'''
+'symbol'
+'''symbol'''
 ...
 ```
 
-A way to define and reference a label that includes special
-characters.
+Produce symbols that can contain special characters.
 
 If you want to use the prefix/suffix quotes in the expression, you can
 always add another 2 quotes to the prefix & suffix. The number of
-quotes are required to be odd, so you can embed quoted labels as a
+quotes are required to be odd, so you can embed quoted symbols as a
 special case:
 
 ```
-''text''
+''symbol''
 ```
 
 When used in label expressions, the first non-empty line will be
-interpreted as the label, and the following lines will be interpreted
+interpreted as the name, and the following lines will be interpreted
 as the description:
 
 ```lisp
@@ -602,7 +673,7 @@ as the description:
 pixel
 ```
 
-> **NOTE:** This means its impossible to define a multiline label
+> **NOTE:** This means its impossible to define a multiline symbol
 
 ### Unicode text expressions
 
@@ -612,9 +683,10 @@ pixel
 ...
 ```
 
-Syntax sugar to [assert](#assertion-expressions) for
-[Unicode](https://en.wikipedia.org/wiki/Unicode) text. This is used to
-define text-based grammars.
+A convenient notation for defining text-based grammars, which is
+actually just syntax sugar for runtime [assertion
+expressions](#assertion-expressions) that assert for
+[Unicode](https://en.wikipedia.org/wiki/Unicode) text.
 
 If you want to use the prefix/suffix quotes in the expression, you can
 always add another 2 quotes to the prefix & suffix. The number of
@@ -639,10 +711,12 @@ with a different encoding with text encoding macros:
 (utf-32 "text")
 ```
 
-Single-line text expressions are automatically labelled by their
-contents if not wrapped by a label expression.
+> **NOTE:** single-line text expressions are implicitly labelled by
+> their contents when used once (unlabelled) within the same
+> scope. This implicit label can be shadowed by explicit labels in the
+> same scope.
 
-#### Codepoint reference expression
+#### Codepoint symbol
 
 ```lisp
 codepoint
@@ -652,7 +726,7 @@ Represents a single Unicode [code
 point](https://en.wikipedia.org/wiki/Code_point) for text in the
 current text encoding context. This can be dynamically sized.
 
-#### Grapheme reference expression
+#### Grapheme symbol
 
 ```lisp
 grapheme
@@ -662,7 +736,36 @@ Represents a single Unicode
 [grapheme](https://en.wikipedia.org/wiki/Grapheme) for text in the
 current text encoding context. This can be dynamically sized.
 
-## Assertion expressions
+## Symbolic expressions
+
+```lisp
+(sexpr arg1 arg2 arg3)
+```
+
+Symbolic expressions are a list of [atomic
+expressions](#atomic-expressions), separated by whitespace & wrapped
+by parenthesis.
+
+The first element is treated as a function, and the remaining elements
+are passed as inputs to that function.
+
+These are considered "symbolic expressions" because their behaviour
+depends on the symbols defined in the current scope.
+
+These modelled after lisp
+[s-expressions](https://en.wikipedia.org/wiki/S-expression), but are
+different in a few ways:
+
+- Ari doesn't have [cons cells](https://en.wikipedia.org/wiki/Cons),
+  so symbolic expressions aren't implemented with cons cells. The
+  closest concept to cons cells are [product
+  expressions](#multiply-and-product-expressions).
+
+- Symbolic expressions form a lexical scope from the [label
+  expressions](#label-expressions) it contains. This means that "let"
+  expressions are embedded in all symbolic expressions.
+
+### Assertion expressions
 
 ```lisp
 :equal (= a b c)
@@ -677,19 +780,11 @@ do, this evaluates to the last argument, otherwise it evaluates to
 
 <!-- TODO: We need some way to do identity assertions to support type checking -->
 
-## Additive expressions
+### Algebraic expressions
 
-### Additive identity
+#### Additive expressions
 
-```lisp
-:additive-identity 0
-```
-
-The [additive
-identity](https://en.wikipedia.org/wiki/Additive_identity) is
-[`0`](#bottom-expression).
-
-### Add and sum expressions
+##### Add and sum expressions
 
 ```lisp
 :add (+ a b)
@@ -712,7 +807,7 @@ associativity:
 )
 ```
 
-### Additive inverse expressions
+##### Additive inverse expressions
 
 ```lisp
 :subtract (- a b)
@@ -721,8 +816,8 @@ associativity:
 Produces an [integer type `ℤ`](https://en.wikipedia.org/wiki/Integer)
 that subtracts the first few `b` states from `a`.
 
-Combined with the additive identity `0`, we derive a unary form of
-subtract `-`:
+Combined with the [additive identity `0`](#bottom-expression), we
+derive a unary form of subtract `-`:
 
 ```lisp
 :negative
@@ -732,26 +827,16 @@ subtract `-`:
 )
 ```
 
-### Additive group theory
+##### Additive group theory
 
 Additive expressions form an [abelian
 group](https://en.wikipedia.org/wiki/Abelian_group) in type-space, and
 a [non-abelian](https://en.wikipedia.org/wiki/Non-abelian_group) group
 in value-space.
 
-## Multiplicative expressions
+#### Multiplicative expressions
 
-### Multiplicative identity
-
-```lisp
-:multiplicative-identity 1
-```
-
-The [multiplicative
-identity](https://en.wikipedia.org/wiki/Multiplicative_identity) is
-[`1`](#unit-expression).
-
-### Multiply and product expressions
+##### Multiply and product expressions
 
 ```lisp
 :multiply (* a b)
@@ -774,7 +859,7 @@ associativity:
 )
 ```
 
-### Multiplicative inverse expressions
+##### Multiplicative inverse expressions
 
 ```lisp
 :divide (/ a b)
@@ -784,8 +869,8 @@ Produces a [rational type
 `ℚ`](https://en.wikipedia.org/wiki/Rational_number) type that divides
 `b` states out of `a`.
 
-Combined with the multiplicative identity `1`, we derive a unary form
-of divide `/`:
+Combined with the [multiplicative identity `1`](#unit-expression), we
+derive a unary form of divide `/`:
 
 ```lisp
 :inverse
@@ -795,16 +880,16 @@ of divide `/`:
 )
 ```
 
-### Multiplicative group theory
+##### Multiplicative group theory
 
 Multiplicative expressions form an [abelian
 group](https://en.wikipedia.org/wiki/Abelian_group) in type-space, and
 a [non-abelian](https://en.wikipedia.org/wiki/Non-abelian_group) group
 in value-space.
 
-## Exponentiation expressions
+#### Exponentiation expressions
 
-### Exponentiate and map expressions
+##### Exponentiate and map expressions
 
 ```lisp
 :exponentiate (^ b e)
@@ -830,7 +915,7 @@ identity](https://en.wikipedia.org/wiki/Exponentiation#Identities_and_properties
 )
 ```
 
-### Exponentiation left inverse expression
+##### Exponentiation left inverse expression
 
 ```lisp
 :logarithm (log b x)
@@ -841,7 +926,7 @@ Produces a [complex type
 like a map type (even if it's not), and computes the exponent `e`
 given the base `b`.
 
-### Exponentiation right inverse expression
+##### Exponentiation right inverse expression
 
 ```lisp
 :root (root x e)
@@ -863,25 +948,25 @@ multiplicative inverse:
 )
 ```
 
-### Exponentiation group theory
+##### Exponentiation group theory
 
 Exponentiation expressions form a
 [quasigroup](https://en.wikipedia.org/wiki/Quasigroup) in both
 type-space & value-space.
 
-## Set expressions
+### Set expressions
 
 Sets let you interpret a single value as multiple different
 types. This is particularly useful when you don't actually know what
 the type is, but the type can be deduced by its contents.
 
-### Singletons
+#### Singletons
 
 All types are implicitly treated as
 [singletons](<https://en.wikipedia.org/wiki/Singleton_(mathematics)>). These
 are sets with exactly one type.
 
-### Empty set expression
+#### Empty set expression
 
 ```lisp
 :empty-set ()
@@ -890,7 +975,7 @@ are sets with exactly one type.
 Produces the [empty set](https://en.wikipedia.org/wiki/Empty_set). A
 set with no types.
 
-### Top expression
+#### Top expression
 
 ```lisp
 :top-type .
@@ -908,7 +993,7 @@ Produces what is called a [top type
 :. .
 ```
 
-### Union expressions
+#### Union expressions
 
 ```lisp
 :union (| a b)
@@ -930,7 +1015,7 @@ associativity:
 )
 ```
 
-#### Zero or one expression
+##### Zero or one expression
 
 ```lisp
 ?
@@ -943,7 +1028,7 @@ Syntax sugar for the [union `|`](#union-expressions) between
 :? (| 0 1)
 ```
 
-### Symmetric difference expression
+#### Symmetric difference expression
 
 ```lisp
 :symmetric-difference (~ a b)
@@ -963,7 +1048,7 @@ symmetric-difference `~` is actually just syntax sugar for the union
 )
 ```
 
-### Intersection expressions
+#### Intersection expressions
 
 ```lisp
 :intersection (& a b)
@@ -985,7 +1070,7 @@ associativity:
 )
 ```
 
-### Complement expressions
+#### Complement expressions
 
 ```lisp
 :relative-complement (! a b)
@@ -1006,7 +1091,7 @@ relative-complement `!`:
 )
 ```
 
-#### One or more expression
+##### One or more expression
 
 ```lisp
 :one-or-more
@@ -1018,7 +1103,7 @@ relative-complement `!`:
 Syntax sugar for the [complement `!`](#complement-expressions) of
 [`0`](#bottom-expression):
 
-### Interval expression
+#### Interval expression
 
 ```lisp
 :interval (.. a b)
