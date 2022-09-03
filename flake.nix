@@ -7,7 +7,8 @@
   };
 
   outputs = { self, flake-utils, nixpkgs }:
-    flake-utils.lib.eachDefaultSystem (system:
+    let systems = [ "x86_64-linux" ]; in
+    flake-utils.lib.eachSystem systems (system:
       let pkgs = nixpkgs.legacyPackages.${system}; in
       rec {
         checks = {
