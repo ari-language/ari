@@ -1,7 +1,7 @@
 use pretty_assertions::assert_eq;
 
 use ari::{
-    ast::{Expr, ExprVariant, Label, Scope, Symbol},
+    ast::{Expr, Label, Scope},
     parser::{parser, Error, ErrorLabel},
 };
 
@@ -12,17 +12,14 @@ fn sexpr() {
     assert_eq!(
         parser().parse_recovery("(* :r 256 :g 256 :b 256)"),
         (
-            Some(Scope::from_iter([Expr::new(
+            Some(Scope::from_exprs([Expr::sexpr(
                 0..24,
-                ExprVariant::SExpr(Scope::from_iter([
-                    Expr::new(1..2, ExprVariant::Symbol(Symbol::unresolved("*"))),
-                    Expr::new(6..9, ExprVariant::Natural(256u16.into()))
-                        .with_labels([Label::new(3..5, "r")]),
-                    Expr::new(13..16, ExprVariant::Natural(256u16.into()))
-                        .with_labels([Label::new(10..12, "g")]),
-                    Expr::new(20..23, ExprVariant::Natural(256u16.into()))
-                        .with_labels([Label::new(17..19, "b")]),
-                ]))
+                [
+                    Expr::symbol(1..2, "*"),
+                    Expr::natural(6..9, 256u16).with_labels([Label::new(3..5, "r")]),
+                    Expr::natural(13..16, 256u16).with_labels([Label::new(10..12, "g")]),
+                    Expr::natural(20..23, 256u16).with_labels([Label::new(17..19, "b")]),
+                ]
             )])),
             vec![],
         )
@@ -33,13 +30,7 @@ fn sexpr() {
 fn empty() {
     assert_eq!(
         parser().parse_recovery("()"),
-        (
-            Some(Scope::from_iter([Expr::new(
-                0..2,
-                ExprVariant::SExpr(Scope::from_iter([]))
-            )])),
-            vec![],
-        )
+        (Some(Scope::from_exprs([Expr::sexpr(0..2, [])])), vec![])
     );
 }
 
@@ -47,13 +38,7 @@ fn empty() {
 fn empty_with_padding() {
     assert_eq!(
         parser().parse_recovery("( )"),
-        (
-            Some(Scope::from_iter([Expr::new(
-                0..3,
-                ExprVariant::SExpr(Scope::from_iter([]))
-            )])),
-            vec![],
-        )
+        (Some(Scope::from_exprs([Expr::sexpr(0..3, [])])), vec![])
     );
 }
 
@@ -62,10 +47,7 @@ fn cant_have_left_paren() {
     assert_eq!(
         parser().parse_recovery("("),
         (
-            Some(Scope::from_iter([Expr::new(
-                0..1,
-                ExprVariant::SExpr(Scope::from_iter([]))
-            )])),
+            Some(Scope::from_exprs([Expr::sexpr(0..1, [])])),
             vec![Error::unexpected_end(1)
                 .with_label(ErrorLabel::SExpr)
                 .with_label(ErrorLabel::ExprWithPath)],
@@ -78,7 +60,7 @@ fn cant_have_right_paren() {
     assert_eq!(
         parser().parse_recovery(")"),
         (
-            Some(Scope::from_iter([])),
+            Some(Scope::from_exprs([])),
             vec![Error::trailing_garbage(0..1)],
         )
     );

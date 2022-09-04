@@ -7,7 +7,7 @@ use num_bigint::BigUint;
 use num_traits::Num;
 
 use crate::{
-    ast::{path_span, Expr, ExprVariant, Label, Path, Scope, Symbol},
+    ast::{path_span, Expr, Label, Path, Scope},
     natural::Natural,
 };
 
@@ -15,16 +15,9 @@ use crate::{
 pub fn parser() -> impl Parser<char, Scope, Error = Error> {
     let expr = recursive(|expr| {
         labels_with_expr(expr_with_path(choice((
-            sexpr(expr)
-                .map(ExprVariant::SExpr)
-                .map_with_span(Expr::with_span),
-            natural()
-                .map(ExprVariant::Natural)
-                .map_with_span(Expr::with_span),
-            symbol()
-                .map(Symbol::Unresolved)
-                .map(ExprVariant::Symbol)
-                .map_with_span(Expr::with_span),
+            sexpr(expr).map_with_span(|sexpr, span| Expr::sexpr(span, sexpr)),
+            natural().map_with_span(|natural, span| Expr::natural(span, natural)),
+            symbol().map_with_span(|symbol, span| Expr::symbol(span, symbol)),
         ))))
     });
 
@@ -53,7 +46,7 @@ fn labels_with_expr(
             Ok(labels) => match expr {
                 Some(expr) => expr.map(|expr| {
                     debug_assert!(expr.labels.is_empty());
-                    Expr::with_labels(expr, labels)
+                    expr.with_labels(labels)
                 }),
                 None => Err(emit(Error::unexpected_end(span.end))),
             },

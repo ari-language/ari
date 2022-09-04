@@ -8,12 +8,12 @@ pub struct Scope {
     expr_from_label: HashMap<String, usize>,
 }
 
-impl FromIterator<Expr> for Scope {
-    fn from_iter<T: IntoIterator<Item = Expr>>(iter: T) -> Self {
+impl Scope {
+    pub fn from_exprs<E: IntoIterator<Item = Expr>>(exprs: E) -> Self {
         let mut expr_from_label = HashMap::<String, usize>::new();
         let mut expr_from_implicit_label = HashMap::<String, Vec<usize>>::new();
 
-        let exprs = iter
+        let exprs = exprs
             .into_iter()
             .enumerate()
             .map(|(i, expr)| {
@@ -56,6 +56,18 @@ impl FromIterator<Expr> for Scope {
     }
 }
 
+impl<const N: usize> From<[Expr; N]> for Scope {
+    fn from(exprs: [Expr; N]) -> Self {
+        Self::from_exprs(exprs.into_iter())
+    }
+}
+
+impl FromIterator<Expr> for Scope {
+    fn from_iter<T: IntoIterator<Item = Expr>>(iter: T) -> Self {
+        Self::from_exprs(iter)
+    }
+}
+
 impl IntoIterator for Scope {
     type Item = Expr;
 
@@ -75,7 +87,7 @@ pub struct Expr {
 }
 
 impl Expr {
-    pub fn new(span: Range<usize>, variant: ExprVariant) -> Self {
+    pub fn variant(span: Range<usize>, variant: ExprVariant) -> Self {
         Self {
             span,
             variant,
@@ -83,9 +95,20 @@ impl Expr {
         }
     }
 
-    // Convenience for chumsky::map_with_span
-    pub(crate) fn with_span(variant: ExprVariant, span: Range<usize>) -> Self {
-        Self::new(span, variant)
+    pub fn natural<N: Into<Natural>>(span: Range<usize>, natural: N) -> Self {
+        Self::variant(span, ExprVariant::Natural(natural.into()))
+    }
+
+    pub fn symbol<S: Into<String>>(span: Range<usize>, symbol: S) -> Self {
+        Self::variant(span, ExprVariant::Symbol(Symbol::unresolved(symbol)))
+    }
+
+    pub fn path<P: Into<Box<Path>>>(span: Range<usize>, path: P) -> Self {
+        Self::variant(span, ExprVariant::Symbol(Symbol::unresolved_path(path)))
+    }
+
+    pub fn sexpr<S: Into<Scope>>(span: Range<usize>, scope: S) -> Self {
+        Self::variant(span, ExprVariant::SExpr(scope.into()))
     }
 
     pub fn with_labels<L: Into<Box<[Label]>>>(mut self, labels: L) -> Self {
