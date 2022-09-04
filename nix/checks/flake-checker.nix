@@ -26,7 +26,7 @@ let
     (builtins.attrValues
       (builtins.mapAttrs
         (name:
-          { files ? [ ]
+          { paths ? [ ]
           , extraSettings ? { }
           }:
           let
@@ -45,15 +45,15 @@ let
             '';
           in
           (builtins.map
-            (file: {
-              inherit file fix;
+            (path: {
+              inherit path fix;
 
-              check = runCommand "${name}-${builtins.baseNameOf file}"
+              check = runCommand "${name}-${builtins.baseNameOf path}"
                 {
                   nativeBuildInputs = packages;
                 }
                 ''
-                  export path=${root + "/${file}"}
+                  export path=${root + "/${path}"}
                   ${configExport}
                   ${checker.check}
                   if [ $? -eq 0 ]; then
@@ -61,12 +61,12 @@ let
                   fi
                 '';
             })
-            files))
+            paths))
         settings));
 
   check = derivation {
     system = stdenv.buildPlatform.system;
-    name = "flake-file-checker";
+    name = "flake-checker";
     nativeBuildInputs = builtins.map ({ check, ... }: check) compiledCheckers;
     builder = "${coreutils}/bin/touch";
     args = [ (placeholder "out") ];
@@ -84,12 +84,12 @@ let
 
     ${builtins.concatStringsSep ""
       (builtins.concatMap
-        ({ file, check, fix }:
+        ({ path, check, fix }:
           if fix != null
           then [
             ''
               if ! [ -e ${builtins.unsafeDiscardStringContext check} ]; then
-                path=${file} ${fix}
+                path=${path} ${fix}
               fi
             ''
           ]

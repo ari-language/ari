@@ -24,11 +24,11 @@
 
         callPackage = pkgs.newScope pkgs;
 
-        flake-file-checker = callPackage ./nix/checks/flake-file-checker.nix {
+        flake-checker = callPackage ./nix/checks/flake-checker.nix {
           root = ./.;
           settings = {
             markdownlint = {
-              files = files.markdown;
+              paths = files.markdown;
               extraSettings = {
                 default = true;
                 MD033 = {
@@ -36,9 +36,9 @@
                 };
               };
             };
-            nixpkgs-fmt.files = files.nix;
-            prettier.files = files.markdown;
-            rustfmt.files = files.rust;
+            nixpkgs-fmt.paths = files.nix;
+            prettier.paths = files.markdown;
+            rustfmt.paths = files.rust;
           };
         };
       in
@@ -48,18 +48,18 @@
         checks = {
           clippy = packages.default.checks.clippy;
           coverage = packages.default.checks.coverage;
-          flake-file-checker = flake-file-checker.check;
+          flake-checker = flake-checker.check;
         } // packages;
 
         apps = {
-          fix = flake-file-checker.fix;
-          fix-check = flake-file-checker.fix-check;
+          fix = flake-checker.fix;
+          fix-check = flake-checker.fix-check;
         };
 
         devShells.default = packages.default.overrideAttrs (attrs: {
           doCheck = true;
           checkInputs = with pkgs; [
-            flake-file-checker.packages
+            flake-checker.packages
             nodePackages.markdown-link-check
           ];
         });
