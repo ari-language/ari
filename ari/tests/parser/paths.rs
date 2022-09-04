@@ -116,10 +116,7 @@ fn must_be_complete() {
     assert_eq!(
         parser().parse_recovery("symbol:"),
         (
-            Some(Scope::from_iter([Expr::new(
-                0..6,
-                ExprVariant::Symbol(Symbol::unresolved("symbol"))
-            )])),
+            Some(Scope::from_iter([])),
             vec![Error::unexpected_end(7)
                 .with_label(ErrorLabel::Path)
                 .with_label(ErrorLabel::ExprWithPath)],
@@ -150,13 +147,10 @@ fn cant_have_left_paren() {
     assert_eq!(
         parser().parse_recovery("symbol:("),
         (
-            None,
-            vec![
-                Error::unexpected_end(7)
-                    .with_label(ErrorLabel::Path)
-                    .with_label(ErrorLabel::ExprWithPath),
-                Error::unexpected_char(7..8, '('),
-            ],
+            Some(Scope::from_iter([])),
+            vec![Error::unexpected_char(7..8, '(')
+                .with_label(ErrorLabel::Path)
+                .with_label(ErrorLabel::ExprWithPath)],
         )
     );
 }
@@ -166,13 +160,10 @@ fn cant_have_right_paren() {
     assert_eq!(
         parser().parse_recovery("symbol:)"),
         (
-            None,
-            vec![
-                Error::unexpected_end(7)
-                    .with_label(ErrorLabel::Path)
-                    .with_label(ErrorLabel::ExprWithPath),
-                Error::unexpected_char(7..8, ')'),
-            ],
+            Some(Scope::from_iter([])),
+            vec![Error::unexpected_char(7..8, ')')
+                .with_label(ErrorLabel::Path)
+                .with_label(ErrorLabel::ExprWithPath)],
         )
     );
 }

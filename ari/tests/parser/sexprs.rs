@@ -50,18 +50,19 @@ fn sexpr() {
         )
     );
 
-    // TODO: Error recovery for unbalanced parens
     assert_eq!(
         parser().parse_recovery("("),
         (
-            None,
+            Some(Scope::from_iter([Expr::new(
+                0..1,
+                ExprVariant::SExpr(Scope::from_iter([]))
+            )])),
             vec![Error::unexpected_end(1)
                 .with_label(ErrorLabel::SExpr)
                 .with_label(ErrorLabel::ExprWithPath)],
         )
     );
 
-    // TODO: Error recovery for unbalanced parens
     assert_eq!(
         parser().parse_recovery(")"),
         (

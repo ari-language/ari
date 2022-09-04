@@ -65,12 +65,9 @@ fn must_have_name() {
         parser().parse_recovery(":"),
         (
             Some(Scope::from_iter([])),
-            vec![
-                Error::unexpected_end(1)
-                    .with_label(ErrorLabel::Label)
-                    .with_label(ErrorLabel::LabelsWithExpr),
-                Error::unexpected_end(1).with_label(ErrorLabel::LabelsWithExpr)
-            ],
+            vec![Error::unexpected_end(1)
+                .with_label(ErrorLabel::Label)
+                .with_label(ErrorLabel::LabelsWithExpr)],
         )
     );
 }
@@ -95,52 +92,41 @@ fn names_cant_have_colon() {
                 3..6,
                 ExprVariant::Natural(256u16.into())
             )])),
-            vec![
-                Error::unexpected_end(1)
-                    .with_label(ErrorLabel::Label)
-                    .with_label(ErrorLabel::LabelsWithExpr),
-                Error::unexpected_end(2)
-                    .with_label(ErrorLabel::Label)
-                    .with_label(ErrorLabel::LabelsWithExpr),
-            ],
+            vec![Error::unexpected_char(1..2, ':')
+                .with_label(ErrorLabel::Label)
+                .with_label(ErrorLabel::LabelsWithExpr)],
         )
     );
 }
 
 #[test]
 fn names_cant_have_left_paren() {
-    // TODO: Error recovery for unbalanced parens
     assert_eq!(
         parser().parse_recovery(":( 256"),
         (
-            None,
-            vec![
-                Error::unexpected_end(1)
-                    .with_label(ErrorLabel::Label)
-                    .with_label(ErrorLabel::LabelsWithExpr),
-                Error::unexpected_end(1).with_label(ErrorLabel::LabelsWithExpr),
-                Error::unexpected_end(6)
-                    .with_label(ErrorLabel::SExpr)
-                    .with_label(ErrorLabel::ExprWithPath)
-            ],
+            Some(Scope::from_iter([Expr::new(
+                3..6,
+                ExprVariant::Natural(256u16.into())
+            )])),
+            vec![Error::unexpected_char(1..2, '(')
+                .with_label(ErrorLabel::Label)
+                .with_label(ErrorLabel::LabelsWithExpr)],
         )
     );
 }
 
 #[test]
 fn names_cant_have_right_paren() {
-    // TODO: Error recovery for unbalanced parens
     assert_eq!(
         parser().parse_recovery(":) 256"),
         (
-            None,
-            vec![
-                Error::unexpected_end(1)
-                    .with_label(ErrorLabel::Label)
-                    .with_label(ErrorLabel::LabelsWithExpr),
-                Error::unexpected_end(1).with_label(ErrorLabel::LabelsWithExpr),
-                Error::unexpected_char(1..2, ')')
-            ],
+            Some(Scope::from_iter([Expr::new(
+                3..6,
+                ExprVariant::Natural(256u16.into())
+            )])),
+            vec![Error::unexpected_char(1..2, ')')
+                .with_label(ErrorLabel::Label)
+                .with_label(ErrorLabel::LabelsWithExpr)],
         )
     );
 }
