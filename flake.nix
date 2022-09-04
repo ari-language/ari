@@ -32,6 +32,10 @@
                 };
               };
             };
+            nixpkgs-fmt = {
+              checker = pkgs.callPackage ./nix/checks/nixpkgs-fmt.nix { };
+              files = files.nix;
+            };
             rustfmt = {
               checker = pkgs.callPackage ./nix/checks/rustfmt.nix { };
               files = files.rust;
@@ -51,6 +55,7 @@
 
         devShells.default = packages.default.overrideAttrs (attrs: {
           checkInputs = with pkgs; [
+            nixpkgs-fmt
             nodePackages.markdown-link-check
             nodePackages.markdownlint-cli
             nodePackages.prettier
