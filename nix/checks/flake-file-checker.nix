@@ -94,7 +94,7 @@ in
     type = "app";
     program = toString (writeShellScript "fix" ''
       ${raw-fix}
-      nix flake check &
+      nix-build ${builtins.unsafeDiscardStringContext check} &
     '');
   };
 
