@@ -1,14 +1,14 @@
 { root
 , checkers
 , lib
+, stdenv
 , runCommand
 , writeShellScript
 , coreutils
-, linkFarm
 }:
 
 let
-  resolvedCheckers = (builtins.concatLists
+  compiledCheckers = builtins.concatLists
     (builtins.attrValues
       (builtins.mapAttrs
         (name:
@@ -16,48 +16,46 @@ let
           , files ? [ ]
           , config ? { }
           }:
+          let
+            packages = checker.packages or [ ];
+
+            configExport = lib.optionalString (checker ? configFormat) ''
+              export config=${checker.configFormat.generate "config" config}
+            '';
+
+            fix = lib.optionalAttrs (checker ? fix) writeShellScript "${name}-fix" ''
+              export PATH=${lib.makeBinPath packages}
+              ${configExport}
+              ${checker.fix}
+            '';
+          in
           (builtins.map
-            (file:
-              let
-                configString = ''
-                  ${lib.optionalString (checker ? configFormat) ''
-                    export config=${checker.configFormat.generate "config" config}
-                  ''}
-                '';
-              in
-              {
-                inherit name;
-                inherit file;
+            (file: {
+              inherit file fix;
 
-                check = runCommand "${name}-${builtins.baseNameOf file}"
-                  {
-                    nativeBuildInputs = checker.packages or [ ];
-                  }
-                  ''
-                    export path=${root + "/${file}"}
-                    ${configString}
-                    ${checker.check}
-                    if [ $? -eq 0 ]; then
-                      touch "$out"
-                    fi
-                  '';
-
-                fix = lib.optionalAttrs (checker ? fix) writeShellScript "${name}-fix" ''
-                  export PATH=${lib.makeBinPath ([ coreutils ] ++ checker.packages or [])}
-                  ${configString}
-                  ${checker.fix}
+              check = runCommand "${name}-${builtins.baseNameOf file}"
+                {
+                  nativeBuildInputs = packages;
+                }
+                ''
+                  export path=${root + "/${file}"}
+                  ${configExport}
+                  ${checker.check}
+                  if [ $? -eq 0 ]; then
+                    touch "$out"
+                  fi
                 '';
-              })
+            })
             files))
-        checkers)));
+        checkers));
 
-  check = linkFarm "flake-file-checker"
-    (builtins.map
-      ({ name, file, check, ... }: {
-        name = "${name}/${file}";
-        path = check;
-      })
-      resolvedCheckers);
+  check = derivation {
+    system = stdenv.buildPlatform.system;
+    name = "flake-file-checker";
+    nativeBuildInputs = builtins.map ({ check, ... }: check) compiledCheckers;
+    builder = "${coreutils}/bin/touch";
+    args = [ (placeholder "out") ];
+  };
 
   raw-fix = writeShellScript "raw-fix" ''
     while [ ! -f flake.nix ]; do
@@ -71,7 +69,7 @@ let
 
     ${builtins.concatStringsSep ""
       (builtins.concatMap
-        ({ file, check, fix, ... }:
+        ({ file, check, fix }:
           if fix != null
           then [
             ''
@@ -82,7 +80,7 @@ let
           ]
           else []
         )
-        resolvedCheckers)}
+        compiledCheckers)}
   '';
 in
 {
