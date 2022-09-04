@@ -1,26 +1,37 @@
 { root
-, checkers
+, settings
+, extraCheckers ? { }
+
 , lib
 , stdenv
+, callPackage
 , runCommand
 , writeShellScript
 , coreutils
 }:
 
 let
+  checkers = {
+    markdownlint = callPackage ./markdownlint.nix { };
+    nixpkgs-fmt = callPackage ./nixpkgs-fmt.nix { };
+    prettier = callPackage ./prettier.nix { };
+    rustfmt = callPackage ./rustfmt.nix { };
+  } // extraCheckers;
+
   packages = builtins.concatMap
-    ({ checker, ... }: checker.packages or [ ])
-    (builtins.attrValues checkers);
+    (name: checkers.${name}.packages or [ ])
+    (builtins.attrNames settings);
 
   compiledCheckers = builtins.concatLists
     (builtins.attrValues
       (builtins.mapAttrs
         (name:
-          { checker
-          , files ? [ ]
+          { files ? [ ]
           , config ? { }
           }:
           let
+            checker = checkers.${name};
+
             packages = checker.packages or [ ];
 
             configExport = lib.optionalString (checker ? configFormat) ''
@@ -51,7 +62,7 @@ let
                 '';
             })
             files))
-        checkers));
+        settings));
 
   check = derivation {
     system = stdenv.buildPlatform.system;

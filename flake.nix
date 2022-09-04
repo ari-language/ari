@@ -26,13 +26,8 @@
 
         flake-file-checker = callPackage ./nix/checks/flake-file-checker.nix {
           root = ./.;
-          checkers = {
-            prettier = {
-              checker = callPackage ./nix/checks/prettier.nix { };
-              files = files.markdown;
-            };
+          settings = {
             markdownlint = {
-              checker = callPackage ./nix/checks/markdownlint.nix { };
               files = files.markdown;
               config = {
                 default = true;
@@ -41,14 +36,9 @@
                 };
               };
             };
-            nixpkgs-fmt = {
-              checker = callPackage ./nix/checks/nixpkgs-fmt.nix { };
-              files = files.nix;
-            };
-            rustfmt = {
-              checker = callPackage ./nix/checks/rustfmt.nix { };
-              files = files.rust;
-            };
+            nixpkgs-fmt.files = files.nix;
+            prettier.files = files.markdown;
+            rustfmt.files = files.rust;
           };
         };
       in
