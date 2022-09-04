@@ -1,3 +1,3 @@
 /.envrc.local
 /flake.lock
-/target
+target
