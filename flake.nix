@@ -69,11 +69,8 @@
         devShells.default = packages.default.overrideAttrs (attrs: {
           doCheck = true;
           checkInputs = with pkgs; [
-            nixpkgs-fmt
+            flake-file-checker.packages
             nodePackages.markdown-link-check
-            nodePackages.markdownlint-cli
-            nodePackages.prettier
-            rustfmt
           ];
         });
       }

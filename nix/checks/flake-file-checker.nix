@@ -8,6 +8,10 @@
 }:
 
 let
+  packages = builtins.concatMap
+    ({ checker, ... }: checker.packages or [ ])
+    (builtins.attrValues checkers);
+
   compiledCheckers = builtins.concatLists
     (builtins.attrValues
       (builtins.mapAttrs
@@ -84,7 +88,7 @@ let
   '';
 in
 {
-  inherit check;
+  inherit packages check;
 
   fix = {
     type = "app";
