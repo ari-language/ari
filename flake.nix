@@ -63,6 +63,7 @@
 
         apps = {
           fix = flake-file-checker.fix;
+          fix-check = flake-file-checker.fix-check;
         };
 
         devShells.default = packages.default.overrideAttrs (attrs: {

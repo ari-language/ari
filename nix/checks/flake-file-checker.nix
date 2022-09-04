@@ -59,7 +59,7 @@ let
       })
       resolvedCheckers);
 
-  fix = writeShellScript "fix" ''
+  raw-fix = writeShellScript "raw-fix" ''
     while [ ! -f flake.nix ]; do
       if [ $PWD == / ]; then
         echo "Couldn't find flake.nix"
@@ -83,8 +83,6 @@ let
           else []
         )
         resolvedCheckers)}
-
-    nix flake check &
   '';
 in
 {
@@ -92,6 +90,17 @@ in
 
   fix = {
     type = "app";
-    program = toString fix;
+    program = toString (writeShellScript "fix" ''
+      ${raw-fix}
+      nix flake check &
+    '');
+  };
+
+  fix-check = {
+    type = "app";
+    program = toString (writeShellScript "fix-check" ''
+      ${raw-fix}
+      nix flake check
+    '');
   };
 }
