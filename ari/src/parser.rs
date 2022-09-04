@@ -2,6 +2,7 @@ use std::ops::Range;
 
 use chumsky::prelude::*;
 use num_bigint::BigUint;
+use num_traits::Num;
 
 use crate::{
     ast::{path_span, Expr, ExprVariant, Label, Path, Scope, Symbol},
@@ -22,7 +23,6 @@ pub fn parser() -> impl Parser<char, Scope, Error = Error> {
                 .map_with_span(Expr::with_span)
                 .labelled(ErrorLabel::SExpr),
             natural()
-                .map(Natural::from)
                 .map(ExprVariant::Natural)
                 .map_with_span(Expr::with_span)
                 .labelled(ErrorLabel::Natural),
@@ -100,12 +100,23 @@ fn label() -> impl Parser<char, Option<Label>, Error = Error> + Copy + Clone {
         })
 }
 
-fn natural() -> impl Parser<char, BigUint, Error = Error> + Copy + Clone {
-    // TODO: Support custom bases: binary, hex, octal, ...
+fn natural() -> impl Parser<char, Natural, Error = Error> + Copy + Clone {
     // TODO: Support underscore for separator
     // TODO: Manually build natural from digits to avoid overhead of
     // converting to string + parse
-    text::int(10).map(|s: String| s.parse().unwrap())
+    choice((
+        just('0').ignore_then(choice((
+            just("b")
+                .ignore_then(text::int(2).map(|s: String| BigUint::from_str_radix(&s, 2).unwrap())),
+            just("o")
+                .ignore_then(text::int(8).map(|s: String| BigUint::from_str_radix(&s, 8).unwrap())),
+            just("x").ignore_then(
+                text::int(16).map(|s: String| BigUint::from_str_radix(&s, 16).unwrap()),
+            ),
+        ))),
+        text::int(10).map(|s: String| BigUint::from_str_radix(&s, 10).unwrap()),
+    ))
+    .map(Natural::from)
 }
 
 fn symbol() -> impl Parser<char, String, Error = Error> + Copy + Clone {

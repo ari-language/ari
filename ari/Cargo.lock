@@ -17,6 +17,7 @@ version = "0.1.0"
 dependencies = [
  "chumsky",
  "num-bigint",
+ "num-traits",
  "vec1",
 ]
 

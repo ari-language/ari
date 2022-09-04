@@ -51,13 +51,12 @@ fn decimal() {
 }
 
 #[test]
-#[ignore = "unimplemented"]
 fn binary() {
     assert_eq!(
-        parser().parse_recovery("0b11111111"),
+        parser().parse_recovery("0b100000000"),
         (
             Some(Scope::from_iter([Expr::new(
-                0..10,
+                0..11,
                 ExprVariant::Natural(256u16.into())
             )])),
             vec![],
@@ -66,7 +65,6 @@ fn binary() {
 }
 
 #[test]
-#[ignore = "unimplemented"]
 fn octal() {
     assert_eq!(
         parser().parse_recovery("0o400"),
@@ -81,13 +79,12 @@ fn octal() {
 }
 
 #[test]
-#[ignore = "unimplemented"]
 fn hexidecimal() {
     assert_eq!(
-        parser().parse_recovery("0xFF"),
+        parser().parse_recovery("0x100"),
         (
             Some(Scope::from_iter([Expr::new(
-                0..4,
+                0..5,
                 ExprVariant::Natural(256u16.into())
             )])),
             vec![],
