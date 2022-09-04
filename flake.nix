@@ -55,6 +55,7 @@
       rec {
         checks = {
           flake-file-checker = flake-file-checker.check;
+          coverage = packages.default.checks.coverage;
         } // packages;
 
         packages = {

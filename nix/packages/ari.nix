@@ -15,6 +15,14 @@ craneLib.buildPackage (commonArgs // {
 
   inherit cargoArtifacts;
 
+  doCheck = false;
+
+  passthru.checks = {
+    coverage = craneLib.cargoTarpaulin (commonArgs // {
+      inherit cargoArtifacts;
+    });
+  };
+
   meta = with lib; {
     description = "A type-centred purely functional programming language designed to type binary files";
     homepage = "https://gitlab.com/ari-lang/ari";
