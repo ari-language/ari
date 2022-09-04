@@ -18,6 +18,11 @@ craneLib.buildPackage (commonArgs // {
   doCheck = false;
 
   passthru.checks = {
+    clippy = craneLib.cargoClippy (commonArgs // {
+      inherit cargoArtifacts;
+      cargoClippyExtraArgs = "--all-targets -- --deny warnings";
+    });
+
     coverage = craneLib.cargoTarpaulin (commonArgs // {
       inherit cargoArtifacts;
     });

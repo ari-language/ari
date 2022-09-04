@@ -70,7 +70,7 @@ impl From<BigUint> for Natural {
                 _ => return Self::Unaligned(value),
             };
 
-            while let Some(lsd) = digits.next() {
+            for lsd in digits.by_ref() {
                 if lsd != 0 {
                     return Self::Unaligned(value);
                 }

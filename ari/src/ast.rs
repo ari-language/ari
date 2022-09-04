@@ -44,11 +44,8 @@ impl FromIterator<Expr> for Scope {
 
         // Apply implicit labels that are unique within the scope
         for (symbol, exprs) in expr_from_implicit_label {
-            match exprs[..] {
-                [i] => {
-                    expr_from_label.entry(symbol).or_insert(i);
-                }
-                _ => (),
+            if let [i] = exprs[..] {
+                expr_from_label.entry(symbol).or_insert(i);
             }
         }
 
@@ -148,7 +145,7 @@ impl Expr {
                 }),
                 ExprVariant::SExpr(scope) => match path.get(depth) {
                     Some(Label { symbol, .. }) => {
-                        match scope.expr_from_label.get(symbol).map(|&index| index) {
+                        match scope.expr_from_label.get(symbol).copied() {
                             Some(index) => {
                                 scope
                                     .into_iter()

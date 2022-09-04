@@ -39,7 +39,7 @@ pub fn parser() -> impl Parser<char, Scope, Error = Error> {
                 Ok(expr) => Some(expr),
                 Err((path, depth)) => {
                     emit(Error::invalid_path(path_span(&path[depth..])));
-                    return None;
+                    None
                 }
             })
             .labelled(ErrorLabel::ExprWithPath);

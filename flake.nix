@@ -54,8 +54,9 @@
       in
       rec {
         checks = {
-          flake-file-checker = flake-file-checker.check;
+          clippy = packages.default.checks.clippy;
           coverage = packages.default.checks.coverage;
+          flake-file-checker = flake-file-checker.check;
         } // packages;
 
         packages = {
