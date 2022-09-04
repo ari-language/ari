@@ -1,4 +1,3 @@
 /.envrc.local
-/Cargo.lock
 /flake.lock
 /target
