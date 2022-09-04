@@ -1,8 +1,8 @@
 mod parser {
-    mod labels;
-    mod naturals;
-    mod paths;
-    mod sexprs;
-    mod symbols;
-    mod top_level_scope;
+    #[rustfmt::skip] mod labels;
+    #[rustfmt::skip] mod naturals;
+    #[rustfmt::skip] mod paths;
+    #[rustfmt::skip] mod sexprs;
+    #[rustfmt::skip] mod symbols;
+    #[rustfmt::skip] mod top_level_scope;
 }

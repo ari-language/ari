@@ -32,6 +32,10 @@
                 };
               };
             };
+            rustfmt = {
+              checker = pkgs.callPackage ./nix/checks/rustfmt.nix { };
+              files = files.rust;
+            };
           };
         };
       in
@@ -50,6 +54,7 @@
             nodePackages.markdown-link-check
             nodePackages.markdownlint-cli
             nodePackages.prettier
+            rustfmt
           ];
         });
       }

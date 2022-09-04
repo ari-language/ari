@@ -15,8 +15,12 @@ builtins.foldl'
   (files: path: {
     markdown = files.markdown
       ++ lib.optional (lib.hasSuffix ".md" path) path;
+
+    rust = files.rust
+      ++ lib.optional (lib.hasSuffix ".rs" path) path;
   })
 {
   markdown = [ ];
+  rust = [ ];
 }
   (walkDir "")
