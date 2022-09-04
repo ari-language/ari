@@ -65,6 +65,7 @@
         };
 
         devShells.default = packages.default.overrideAttrs (attrs: {
+          doCheck = true;
           checkInputs = with pkgs; [
             nixpkgs-fmt
             nodePackages.markdown-link-check
