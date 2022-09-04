@@ -4,9 +4,13 @@
   inputs = {
     flake-utils.url = "github:numtide/flake-utils";
     nixpkgs.url = "nixpkgs/release-22.05";
+    crane = {
+      url = "github:ipetkov/crane";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
   };
 
-  outputs = { self, flake-utils, nixpkgs }:
+  outputs = { self, flake-utils, nixpkgs, crane }:
     let
       lib = nixpkgs.lib;
       systems = [ "x86_64-linux" ];
@@ -14,16 +18,21 @@
     in
     flake-utils.lib.eachSystem systems (system:
       let
-        pkgs = nixpkgs.legacyPackages.${system};
-        flake-file-checker = pkgs.callPackage ./nix/checks/flake-file-checker.nix {
+        pkgs = nixpkgs.legacyPackages.${system} // {
+          craneLib = crane.lib.${system};
+        };
+
+        callPackage = pkgs.newScope pkgs;
+
+        flake-file-checker = callPackage ./nix/checks/flake-file-checker.nix {
           root = ./.;
           checkers = {
             prettier = {
-              checker = pkgs.callPackage ./nix/checks/prettier.nix { };
+              checker = callPackage ./nix/checks/prettier.nix { };
               files = files.markdown;
             };
             markdownlint = {
-              checker = pkgs.callPackage ./nix/checks/markdownlint.nix { };
+              checker = callPackage ./nix/checks/markdownlint.nix { };
               files = files.markdown;
               config = {
                 default = true;
@@ -33,11 +42,11 @@
               };
             };
             nixpkgs-fmt = {
-              checker = pkgs.callPackage ./nix/checks/nixpkgs-fmt.nix { };
+              checker = callPackage ./nix/checks/nixpkgs-fmt.nix { };
               files = files.nix;
             };
             rustfmt = {
-              checker = pkgs.callPackage ./nix/checks/rustfmt.nix { };
+              checker = callPackage ./nix/checks/rustfmt.nix { };
               files = files.rust;
             };
           };
@@ -49,7 +58,7 @@
         } // packages;
 
         packages = {
-          default = pkgs.callPackage ./nix/packages/ari.nix { };
+          default = callPackage ./nix/packages/ari.nix { };
           fix = flake-file-checker.fix;
         };
 

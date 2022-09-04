@@ -1,12 +1,19 @@
 { lib
-, rustPlatform
+, craneLib
 }:
 
-rustPlatform.buildRustPackage {
+let
+  commonArgs = {
+    src = ../../ari;
+  };
+
+  cargoArtifacts = craneLib.buildDepsOnly commonArgs;
+in
+craneLib.buildPackage (commonArgs // {
   pname = "ari";
   version = "0.1";
-  src = ../../ari;
-  cargoSha256 = "sha256-Ec+nKZKMKUhh5JvBF0rn/8H0ijlOKAElH9MikaD4zfg=";
+
+  inherit cargoArtifacts;
 
   meta = with lib; {
     description = "A type-centred purely functional programming language designed to type binary files";
@@ -14,4 +21,4 @@ rustPlatform.buildRustPackage {
     license = licenses.gpl3Plus;
     maintainers = with maintainers; [ kira-bruneau ];
   };
-}
+})
