@@ -5,7 +5,6 @@
 , writeShellScript
 , coreutils
 , linkFarm
-, writeShellScriptBin
 }:
 
 let
@@ -51,8 +50,7 @@ let
               })
             files))
         checkers)));
-in
-{
+
   check = linkFarm "flake-file-checker"
     (builtins.map
       ({ name, file, check, ... }: {
@@ -61,7 +59,7 @@ in
       })
       resolvedCheckers);
 
-  fix = writeShellScriptBin "fix" ''
+  fix = writeShellScript "fix" ''
     while [ ! -f flake.nix ]; do
       if [ $PWD == / ]; then
         echo "Couldn't find flake.nix"
@@ -88,4 +86,12 @@ in
 
     nix flake check &
   '';
+in
+{
+  inherit check;
+
+  fix = {
+    type = "app";
+    program = toString fix;
+  };
 }

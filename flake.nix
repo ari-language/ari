@@ -53,14 +53,15 @@
         };
       in
       rec {
+        packages.default = callPackage ./nix/packages/ari.nix { };
+
         checks = {
           clippy = packages.default.checks.clippy;
           coverage = packages.default.checks.coverage;
           flake-file-checker = flake-file-checker.check;
         } // packages;
 
-        packages = {
-          default = callPackage ./nix/packages/ari.nix { };
+        apps = {
           fix = flake-file-checker.fix;
         };
 
