@@ -3,18 +3,27 @@
 
   inputs = {
     flake-utils.url = "github:numtide/flake-utils";
+
+    flake-checker = {
+      url = "gitlab:kira-bruneau/flake-checker";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
+
     nixpkgs.url = "nixpkgs/release-22.05";
+
     crane = {
       url = "github:ipetkov/crane";
       inputs.nixpkgs.follows = "nixpkgs";
     };
   };
 
-  outputs = { self, flake-utils, nixpkgs, crane }:
+  outputs = { self, flake-utils, flake-checker, nixpkgs, crane }:
     let
       lib = nixpkgs.lib;
       systems = [ "x86_64-linux" ];
-      files = import ./nix/files.nix { inherit lib; };
+      paths = flake-checker.lib.partitionToAttrs
+        flake-checker.lib.commonFlakePaths
+        (flake-checker.lib.walkFlake ./.);
     in
     flake-utils.lib.eachSystem systems (system:
       let
@@ -24,11 +33,11 @@
 
         callPackage = pkgs.newScope pkgs;
 
-        flake-checker = callPackage ./nix/checks/flake-checker.nix {
+        checker = flake-checker.lib.makeFlakeChecker {
           root = ./.;
           settings = {
             markdownlint = {
-              paths = files.markdown;
+              paths = paths.markdown;
               extraSettings = {
                 default = true;
                 MD033 = {
@@ -36,30 +45,33 @@
                 };
               };
             };
-            nixpkgs-fmt.paths = files.nix;
-            prettier.paths = files.markdown;
-            rustfmt.paths = files.rust;
+            nixpkgs-fmt.paths = paths.nix;
+            prettier.paths = paths.markdown;
+            rustfmt.paths = paths.rust;
           };
+
+          inherit pkgs;
         };
       in
       rec {
         packages.default = callPackage ./nix/packages/ari.nix { };
 
         checks = {
-          clippy = packages.default.checks.clippy;
-          coverage = packages.default.checks.coverage;
-          flake-checker = flake-checker.check;
+          inherit (packages.default.checks)
+            clippy
+            coverage;
+
+          inherit (checker) check;
         } // packages;
 
         apps = {
-          fix = flake-checker.fix;
-          fix-check = flake-checker.fix-check;
+          inherit (checker) fix;
         };
 
         devShells.default = packages.default.overrideAttrs (attrs: {
           doCheck = true;
           checkInputs = with pkgs; [
-            flake-checker.packages
+            checker.packages
             nodePackages.markdown-link-check
           ];
         });

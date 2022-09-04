@@ -22,6 +22,27 @@
         "type": "github"
       }
     },
+    "flake-checker": {
+      "inputs": {
+        "flake-utils": "flake-utils_2",
+        "nixpkgs": [
+          "nixpkgs"
+        ]
+      },
+      "locked": {
+        "lastModified": 1662344938,
+        "narHash": "sha256-XIi7FFzUhfiEnXW4sJg/TBQQy3gm0x4v1zqMpUZOops=",
+        "owner": "kira-bruneau",
+        "repo": "flake-checker",
+        "rev": "c6182624e0e4524426d3c3d0b603ef782d6848b2",
+        "type": "gitlab"
+      },
+      "original": {
+        "owner": "kira-bruneau",
+        "repo": "flake-checker",
+        "type": "gitlab"
+      }
+    },
     "flake-compat": {
       "flake": false,
       "locked": {
@@ -68,6 +89,21 @@
         "type": "github"
       }
     },
+    "flake-utils_3": {
+      "locked": {
+        "lastModified": 1659877975,
+        "narHash": "sha256-zllb8aq3YO3h8B/U0/J1WBgAL8EX5yWf5pMj3G0NAmc=",
+        "owner": "numtide",
+        "repo": "flake-utils",
+        "rev": "c0e246b9b83f637f4681389ecabcb2681b4f3af0",
+        "type": "github"
+      },
+      "original": {
+        "owner": "numtide",
+        "repo": "flake-utils",
+        "type": "github"
+      }
+    },
     "nixpkgs": {
       "locked": {
         "lastModified": 1661700591,
@@ -86,7 +122,8 @@
     "root": {
       "inputs": {
         "crane": "crane",
-        "flake-utils": "flake-utils_2",
+        "flake-checker": "flake-checker",
+        "flake-utils": "flake-utils_3",
         "nixpkgs": "nixpkgs"
       }
     }
