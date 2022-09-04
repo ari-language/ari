@@ -3,7 +3,7 @@
 {
   packages = [ nodePackages.markdownlint-cli ];
 
-  configFormat = formats.json { };
+  settingsFormat = formats.json { };
 
   check = ''
     markdownlint --config "$config" "$path";

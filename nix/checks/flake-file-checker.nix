@@ -27,15 +27,15 @@ let
       (builtins.mapAttrs
         (name:
           { files ? [ ]
-          , config ? { }
+          , extraSettings ? { }
           }:
           let
             checker = checkers.${name};
 
             packages = checker.packages or [ ];
 
-            configExport = lib.optionalString (checker ? configFormat) ''
-              export config=${checker.configFormat.generate "config" config}
+            configExport = lib.optionalString (checker ? settingsFormat) ''
+              export config=${checker.settingsFormat.generate "config" extraSettings}
             '';
 
             fix = lib.optionalAttrs (checker ? fix) writeShellScript "${name}-fix" ''

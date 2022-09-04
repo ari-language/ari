@@ -3,7 +3,7 @@
 {
   packages = [ rustfmt ];
 
-  configFormat = formats.toml { };
+  settingsFormat = formats.toml { };
 
   check = ''
     rustfmt --config-path "$config" --check "$path"

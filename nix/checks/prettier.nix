@@ -3,7 +3,7 @@
 {
   packages = [ nodePackages.prettier ];
 
-  configFormat = formats.json { };
+  settingsFormat = formats.json { };
 
   check = ''
     prettier --config "$config" --check "$path"

@@ -29,7 +29,7 @@
           settings = {
             markdownlint = {
               files = files.markdown;
-              config = {
+              extraSettings = {
                 default = true;
                 MD033 = {
                   allowed_elements = [ "img" "table" "tr" "th" "td" ];
