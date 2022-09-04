@@ -10,6 +10,6 @@
   '';
 
   fix = ''
-    markdownlint --config "$config" --fix "$out"
+    markdownlint --config "$config" --fix "$path"
   '';
 }

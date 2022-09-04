@@ -10,6 +10,6 @@
   '';
 
   fix = ''
-    rustfmt --config-path "$config" "$out"
+    rustfmt --config-path "$config" "$path"
   '';
 }

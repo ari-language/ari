@@ -10,6 +10,6 @@
   '';
 
   fix = ''
-    prettier --config "$config" --write "$out"
+    prettier --config "$config" --write "$path"
   '';
 }

@@ -8,6 +8,6 @@
   '';
 
   fix = ''
-    nixpkgs-fmt "$out"
+    nixpkgs-fmt "$path"
   '';
 }

@@ -74,7 +74,7 @@ let
           then [
             ''
               if ! [ -e ${builtins.unsafeDiscardStringContext check} ]; then
-                path=${root + "/${file}"} out=${file} ${fix}
+                path=${file} ${fix}
               fi
             ''
           ]
