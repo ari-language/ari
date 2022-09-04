@@ -20,8 +20,7 @@ let
           (builtins.map
             (file:
               let
-                context = ''
-                  export path=${root + "/${file}"}
+                configString = ''
                   ${lib.optionalString (checker ? configFormat) ''
                     export config=${checker.configFormat.generate "config" config}
                   ''}
@@ -36,7 +35,8 @@ let
                     nativeBuildInputs = checker.packages or [ ];
                   }
                   ''
-                    ${context}
+                    export path=${root + "/${file}"}
+                    ${configString}
                     ${checker.check}
                     if [ $? -eq 0 ]; then
                       touch "$out"
@@ -45,7 +45,7 @@ let
 
                 fix = lib.optionalAttrs (checker ? fix) writeShellScript "${name}-fix" ''
                   export PATH=${lib.makeBinPath ([ coreutils ] ++ checker.packages or [])}
-                  ${context}
+                  ${configString}
                   ${checker.fix}
                 '';
               })
@@ -78,7 +78,7 @@ in
           then [
             ''
               if ! [ -e ${builtins.unsafeDiscardStringContext check} ]; then
-                out=${file} ${fix}
+                path=${root + "/${file}"} out=${file} ${fix}
               fi
             ''
           ]
