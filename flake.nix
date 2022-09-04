@@ -22,6 +22,16 @@
               checker = pkgs.callPackage ./nix/checks/prettier.nix { };
               files = files.markdown;
             };
+            markdownlint = {
+              checker = pkgs.callPackage ./nix/checks/markdownlint.nix { };
+              files = files.markdown;
+              config = {
+                default = true;
+                MD033 = {
+                  allowed_elements = [ "img" "table" "tr" "th" "td" ];
+                };
+              };
+            };
           };
         };
       in
@@ -38,6 +48,7 @@
         devShells.default = packages.default.overrideAttrs (attrs: {
           checkInputs = with pkgs; [
             nodePackages.markdown-link-check
+            nodePackages.markdownlint-cli
             nodePackages.prettier
           ];
         });

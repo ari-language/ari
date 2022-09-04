@@ -6,9 +6,9 @@ A type-centred [purely functional
 programming](https://en.wikipedia.org/wiki/Purely_functional_programming)
 language designed to type binary files.
 
-# Why does this exist?
+## Why does this exist?
 
-## To make binary files more accessible
+### To make binary files more accessible
 
 Most binary files require specially designed tools to read & write,
 but ari types are designed so that you can decompose any binary file
@@ -17,33 +17,33 @@ foundation for other tools to build on top of.
 
 Some of the tools we plan on building with ari include:
 
-### arie
+#### arie
 
 An editor specially designed to edit files using ari types.
 
 We'll also build plugins for existing text editors.
 
-### ariq
+#### ariq
 
 A command line tool to query components of a file using ari types.
 
-### aric
+#### aric
 
 A command line tool to compile ari types into other languages using
 [ari map types](#exponentiate-and-map-expressions).
 
-### arid
+#### arid
 
 A command line tool to structurally diff files of the same ari type.
 
-### ariz
+#### ariz
 
 A command line tool to compress files & directories using ari types.
 
 Ari's type system is designed to act as a guide for [arithmetic
 coding](https://en.wikipedia.org/wiki/Arithmetic_coding).
 
-## ... but also, not just binary formats
+### ... but also, not just binary formats
 
 While the primary focus is to help interpret binary data, ari is also
 designed to model grammars for text-based languages.
@@ -277,9 +277,9 @@ non-terminal
 </tr>
 </table>
 
-# What makes ari unique?
+## What makes ari unique?
 
-## Types are the main focus of the language
+### Types are the main focus of the language
 
 In ari, everything is a type. Types and type expressions are the
 primary focus of the language. You can add, multiply, and even
@@ -352,7 +352,7 @@ programming language.
 
 See the [language reference](#language-reference)
 
-## Generalizes the idea of primitive types
+### Generalizes the idea of primitive types
 
 In ari, there are infinitely many primitives types generalized by a
 single concept, [natural
@@ -400,7 +400,7 @@ smaller numbers... and label them 🙂.
 > natural type, which allows for a level of precision not possible in
 > other type systems.
 
-## Value bindings and dependant types
+### Value bindings and dependant types
 
 In ari all types have an implicit binding with a corresponding runtime
 value. [Dereference expressions `@`](#dereference-expressions) can be
@@ -434,7 +434,7 @@ compile time & runtime because it's [purely
 functional](https://en.wikipedia.org/wiki/Functional_programming),
 meaning that expressions don't depend on any hidden state.
 
-## Labels are optional, but you can also label anything
+### Labels are optional, but you can also label anything
 
 Most languages force you to name things, even when the name is
 redundant or unnecessary. A lot of these languages have to come up
@@ -455,7 +455,7 @@ parent.
 
 When you can label everything, anything can be a module.
 
-# What ideas does ari steal?
+## What ideas does ari steal?
 
 Ari steals a bunch of good ideas from various places:
 
@@ -486,17 +486,17 @@ Language Inspirations:
 - [Haskell](https://www.haskell.org) (indirectly through Rust & Nix +
   monads)
 
-# Language reference
+## Language reference
 
-## Atomic expressions
+### Atomic expressions
 
 These are the predefined base expressions of ari, they produce the
 "atoms" for [symbolic expressions](#symbolic-expressions).
 
-### Natural expressions
+#### Natural expressions
 
-```
-0, 1, 2, 3, ...
+```lisp
+0 1 2 3 ...
 ```
 
 Produce the [primitive
@@ -505,7 +505,7 @@ language, modelled after [natural
 numbers](https://en.wikipedia.org/wiki/Natural_number). Its "value"
 encodes the number of possible states that can exist in the type.
 
-#### Bottom expression
+##### Bottom expression
 
 ```lisp
 0
@@ -548,7 +548,7 @@ Well.... types can also be evaluated at runtime with [dereference
 expressions `@`](#dereference-expressions), and we use this same idea
 to catch runtime errors.
 
-#### Unit expression
+##### Unit expression
 
 ```lisp
 1
@@ -569,7 +569,7 @@ expressions](#add-and-sum-expressions):
 )
 ```
 
-### Label expressions
+#### Label expressions
 
 ```lisp
 :label 123
@@ -577,7 +577,7 @@ expressions](#add-and-sum-expressions):
 
 Define a name for the result of an expression in the current scope.
 
-### Symbol expressions
+#### Symbol expressions
 
 ```lisp
 symbol
@@ -590,7 +590,7 @@ Symbols are implicitly labelled by their name when used once
 (unlabelled) within the same scope. This implicit label can be
 shadowed by explicit labels in the same scope.
 
-### Value expressions
+#### Value expressions
 
 In ari, all types are implicitly bound to a corresponding runtime
 value. Value expressions are used to refer to these runtime values.
@@ -603,7 +603,7 @@ They can only be used in:
 > **NOTE:** These are the same contexts that propagate the [bottom
 > type `0`](#bottom-expression).
 
-#### Reference expressions
+##### Reference expressions
 
 ```lisp
 $symbol
@@ -612,7 +612,7 @@ $symbol
 Produce "reference types", which are bound to the same runtime value
 of `symbol`, but are equivalent to [`1`](#unit-expression).
 
-#### Dereference expressions
+##### Dereference expressions
 
 ```lisp
 @symbol
@@ -631,7 +631,7 @@ runtime value of the non-symbol type.
 
 "Effective types" don't have an associated runtime value.
 
-### Path expressions
+#### Path expressions
 
 ```lisp
 symbol:x:y:z
@@ -640,9 +640,9 @@ symbol:x:y:z
 
 Produce a nested type contained within another type.
 
-### Extended symbol expressions
+#### Extended symbol expressions
 
-```
+```ari
 'symbol'
 '''symbol'''
 ...
@@ -655,7 +655,7 @@ always add another 2 quotes to the prefix & suffix. The number of
 quotes are required to be odd, so you can embed quoted symbols as a
 special case:
 
-```
+```ari
 ''symbol''
 ```
 
@@ -675,9 +675,9 @@ pixel
 
 > **NOTE:** This means its impossible to define a multiline symbol
 
-### Unicode text expressions
+#### Unicode text expressions
 
-```
+```ari
 "text"
 """text"""
 ...
@@ -693,7 +693,7 @@ always add another 2 quotes to the prefix & suffix. The number of
 quotes are required to be odd, so you can embed quoted text as a
 special case:
 
-```
+```ari
 ""text""
 ```
 
@@ -716,7 +716,7 @@ with a different encoding with text encoding macros:
 > scope. This implicit label can be shadowed by explicit labels in the
 > same scope.
 
-#### Codepoint symbol
+##### Codepoint symbol
 
 ```lisp
 codepoint
@@ -726,7 +726,7 @@ Represents a single Unicode [code
 point](https://en.wikipedia.org/wiki/Code_point) for text in the
 current text encoding context. This can be dynamically sized.
 
-#### Grapheme symbol
+##### Grapheme symbol
 
 ```lisp
 grapheme
@@ -736,7 +736,7 @@ Represents a single Unicode
 [grapheme](https://en.wikipedia.org/wiki/Grapheme) for text in the
 current text encoding context. This can be dynamically sized.
 
-## Symbolic expressions
+### Symbolic expressions
 
 ```lisp
 (sexpr arg1 arg2 arg3)
@@ -765,7 +765,7 @@ different in a few ways:
   expressions](#label-expressions) it contains. This means that "let"
   expressions are embedded in all symbolic expressions.
 
-### Assertion expressions
+#### Assertion expressions
 
 ```lisp
 :equal (= a b c)
@@ -780,11 +780,11 @@ do, this evaluates to the last argument, otherwise it evaluates to
 
 <!-- TODO: We need some way to do identity assertions to support type checking -->
 
-### Algebraic expressions
+#### Algebraic expressions
 
-#### Additive expressions
+##### Additive expressions
 
-##### Add and sum expressions
+###### Add and sum expressions
 
 ```lisp
 :add (+ a b)
@@ -807,7 +807,7 @@ associativity:
 )
 ```
 
-##### Additive inverse expressions
+###### Additive inverse expressions
 
 ```lisp
 :subtract (- a b)
@@ -827,16 +827,16 @@ derive a unary form of subtract `-`:
 )
 ```
 
-##### Additive group theory
+###### Additive group theory
 
 Additive expressions form an [abelian
 group](https://en.wikipedia.org/wiki/Abelian_group) in type-space, and
 a [non-abelian](https://en.wikipedia.org/wiki/Non-abelian_group) group
 in value-space.
 
-#### Multiplicative expressions
+##### Multiplicative expressions
 
-##### Multiply and product expressions
+###### Multiply and product expressions
 
 ```lisp
 :multiply (* a b)
@@ -859,7 +859,7 @@ associativity:
 )
 ```
 
-##### Multiplicative inverse expressions
+###### Multiplicative inverse expressions
 
 ```lisp
 :divide (/ a b)
@@ -880,16 +880,16 @@ derive a unary form of divide `/`:
 )
 ```
 
-##### Multiplicative group theory
+###### Multiplicative group theory
 
 Multiplicative expressions form an [abelian
 group](https://en.wikipedia.org/wiki/Abelian_group) in type-space, and
 a [non-abelian](https://en.wikipedia.org/wiki/Non-abelian_group) group
 in value-space.
 
-#### Exponentiation expressions
+##### Exponentiation expressions
 
-##### Exponentiate and map expressions
+###### Exponentiate and map expressions
 
 ```lisp
 :exponentiate (^ b e)
@@ -915,7 +915,7 @@ identity](https://en.wikipedia.org/wiki/Exponentiation#Identities_and_properties
 )
 ```
 
-##### Exponentiation left inverse expression
+###### Exponentiation left inverse expression
 
 ```lisp
 :logarithm (log b x)
@@ -926,7 +926,7 @@ Produces a [complex type
 like a map type (even if it's not), and computes the exponent `e`
 given the base `b`.
 
-##### Exponentiation right inverse expression
+###### Exponentiation right inverse expression
 
 ```lisp
 :root (root x e)
@@ -948,25 +948,25 @@ multiplicative inverse:
 )
 ```
 
-##### Exponentiation group theory
+###### Exponentiation group theory
 
 Exponentiation expressions form a
 [quasigroup](https://en.wikipedia.org/wiki/Quasigroup) in both
 type-space & value-space.
 
-### Set expressions
+#### Set expressions
 
 Sets let you interpret a single value as multiple different
 types. This is particularly useful when you don't actually know what
 the type is, but the type can be deduced by its contents.
 
-#### Singletons
+##### Singletons
 
 All types are implicitly treated as
 [singletons](<https://en.wikipedia.org/wiki/Singleton_(mathematics)>). These
 are sets with exactly one type.
 
-#### Empty set expression
+##### Empty set expression
 
 ```lisp
 :empty-set ()
@@ -975,7 +975,7 @@ are sets with exactly one type.
 Produces the [empty set](https://en.wikipedia.org/wiki/Empty_set). A
 set with no types.
 
-#### Top expression
+##### Top expression
 
 ```lisp
 :top-type .
@@ -993,7 +993,7 @@ references itself:
 :. .
 ```
 
-#### Union expressions
+##### Union expressions
 
 ```lisp
 :union (| a b)
@@ -1015,7 +1015,7 @@ associativity:
 )
 ```
 
-##### Zero or one expression
+###### Zero or one expression
 
 ```lisp
 ?
@@ -1028,7 +1028,7 @@ Syntax sugar for the [union `|`](#union-expressions) between
 :? (| 0 1)
 ```
 
-#### Symmetric difference expression
+##### Symmetric difference expression
 
 ```lisp
 :symmetric-difference (~ a b)
@@ -1048,7 +1048,7 @@ symmetric-difference `~` is actually just syntax sugar for the union
 )
 ```
 
-#### Intersection expressions
+##### Intersection expressions
 
 ```lisp
 :intersection (& a b)
@@ -1070,7 +1070,7 @@ associativity:
 )
 ```
 
-#### Complement expressions
+##### Complement expressions
 
 ```lisp
 :relative-complement (! a b)
@@ -1091,7 +1091,7 @@ relative-complement `!`:
 )
 ```
 
-##### One or more expression
+###### One or more expression
 
 ```lisp
 :one-or-more
@@ -1103,7 +1103,7 @@ relative-complement `!`:
 Syntax sugar for the [complement `!`](#complement-expressions) of
 [`0`](#bottom-expression):
 
-#### Interval expression
+##### Interval expression
 
 ```lisp
 :interval (.. a b)
@@ -1129,7 +1129,7 @@ Combined with the empty set `()`, we derive a unary form of interval
 
 <!-- Self referencing has to be possible, how can we refer to something with the same name in the parent scope? -->
 
-# License
+## License
 
 Copyright (C) 2022 Kira Bruneau
 
@@ -1146,7 +1146,7 @@ General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with this program. If not, see <https://www.gnu.org/licenses/>.
 
-## Why is this licensed under the GPL instead of the LGPL?
+### Why is this licensed under the GPL instead of the LGPL?
 
 This was a difficult decision. By licensing this under the GPL, not
 only are we preventing proprietary software from being combined with
