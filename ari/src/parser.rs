@@ -64,11 +64,7 @@ pub fn parser() -> impl Parser<char, Scope, Error = Error> {
         .validate(|c, span, emit| emit(Error::unexpected_char(span, c)))
         .repeated();
 
-    expr.separated_by(required_whitespace())
-        .at_least(1)
-        .flatten()
-        .collect()
-        .padded()
+    scope(expr)
         .then_ignore(trailing_right_parens)
         .then_ignore(end())
 }
@@ -76,10 +72,7 @@ pub fn parser() -> impl Parser<char, Scope, Error = Error> {
 fn sexpr(
     expr: impl Parser<char, Result<Expr, ()>, Error = Error> + Clone,
 ) -> impl Parser<char, Scope, Error = Error> + Clone {
-    expr.separated_by(required_whitespace())
-        .flatten()
-        .collect()
-        .padded()
+    scope(expr)
         .delimited_by(
             just('('),
             just(')')
@@ -88,6 +81,15 @@ fn sexpr(
                 .validate(|result, _span, emit| result.map_err(emit)),
         )
         .labelled(ErrorLabel::SExpr)
+}
+
+fn scope(
+    expr: impl Parser<char, Result<Expr, ()>, Error = Error> + Clone,
+) -> impl Parser<char, Scope, Error = Error> + Clone {
+    expr.separated_by(required_whitespace())
+        .flatten()
+        .collect()
+        .padded()
 }
 
 fn path() -> impl Parser<char, Result<Box<Path>, ()>, Error = Error> + Clone {

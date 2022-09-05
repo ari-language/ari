@@ -66,10 +66,8 @@ fn sexpr() {
     assert_eq!(
         parser().parse_recovery(")"),
         (
-            None,
-            vec![Error::unexpected_char(0..1, ')')
-                .with_label(ErrorLabel::Symbol)
-                .with_label(ErrorLabel::ExprWithPath)],
+            Some(Scope::from_iter([])),
+            vec![Error::unexpected_char(0..1, ')')],
         )
     );
 }
