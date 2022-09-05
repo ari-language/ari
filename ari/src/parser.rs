@@ -1,3 +1,5 @@
+#![allow(clippy::unit_arg)]
+
 use std::ops::Range;
 
 use chumsky::prelude::*;
@@ -31,14 +33,12 @@ pub fn parser() -> impl Parser<char, Scope, Error = Error> {
         let expr_with_path = base_expr
             .then(path().or_not().labelled(ErrorLabel::Path))
             .validate(|(expr, path), _span, emit| match path {
-                Some(path) => path.and_then(|path| match expr.with_path(path, 0) {
-                    Ok(expr) => Some(expr),
-                    Err((path, depth)) => {
-                        emit(Error::invalid_path(path_span(&path[depth..])));
-                        None
-                    }
+                Some(path) => path.and_then(|path| {
+                    expr.with_path(path, 0).map_err(|(path, depth)| {
+                        emit(Error::invalid_path(path_span(&path[depth..])))
+                    })
                 }),
-                None => Some(expr),
+                None => Ok(expr),
             })
             .labelled(ErrorLabel::ExprWithPath);
 
@@ -46,21 +46,18 @@ pub fn parser() -> impl Parser<char, Scope, Error = Error> {
             .labelled(ErrorLabel::Label)
             .separated_by(text::whitespace())
             .at_least(1)
-            .collect::<Option<Box<[Label]>>>()
+            .collect::<Result<Box<[Label]>, ()>>()
             .then_ignore(required_whitespace().or(end()))
-            .then(expr_with_path.clone().map(Some).or(end().to(None)))
+            .then(expr_with_path.clone().map(Ok).or(end().map(Err)))
             .validate(|(labels, expr), span, emit| match labels {
-                Some(labels) => match expr {
-                    Some(expr) => expr.map(|expr| {
+                Ok(labels) => match expr {
+                    Ok(expr) => expr.map(|expr| {
                         debug_assert!(expr.labels.is_empty());
                         Expr::with_labels(expr, labels)
                     }),
-                    None => {
-                        emit(Error::unexpected_end(span.end));
-                        None
-                    }
+                    Err(()) => Err(emit(Error::unexpected_end(span.end))),
                 },
-                None => expr.flatten(),
+                Err(()) => expr.and_then(|expr| expr),
             })
             .labelled(ErrorLabel::LabelsWithExpr);
 
@@ -81,11 +78,12 @@ pub fn parser() -> impl Parser<char, Scope, Error = Error> {
 }
 
 fn sexpr(
-    expr: impl Parser<char, Option<Expr>, Error = Error> + Clone,
+    expr: impl Parser<char, Result<Expr, ()>, Error = Error> + Clone,
 ) -> impl Parser<char, Scope, Error = Error> + Clone {
     expr.separated_by(required_whitespace())
         .flatten()
         .collect()
+        .padded()
         .padded()
         .delimited_by(
             just('('),
@@ -100,19 +98,16 @@ fn sexpr(
         )
 }
 
-fn path() -> impl Parser<char, Option<Box<Path>>, Error = Error> + Copy + Clone {
+fn path() -> impl Parser<char, Result<Box<Path>, ()>, Error = Error> + Copy + Clone {
     label().repeated().at_least(1).collect()
 }
 
-fn label() -> impl Parser<char, Option<Label>, Error = Error> + Copy + Clone {
+fn label() -> impl Parser<char, Result<Label, ()>, Error = Error> + Copy + Clone {
     just(':')
         .ignore_then(symbol().map(Ok).or_else(|err| Ok(Err(err))))
         .validate(|symbol, span, emit| match symbol {
-            Ok(symbol) => Some(Label::new(span, symbol)),
-            Err(err) => {
-                emit(err);
-                None
-            }
+            Ok(symbol) => Ok(Label::new(span, symbol)),
+            Err(err) => Err(emit(err)),
         })
 }
 
