@@ -84,7 +84,6 @@ fn sexpr(
         .flatten()
         .collect()
         .padded()
-        .padded()
         .delimited_by(
             just('('),
             just(')')
