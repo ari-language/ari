@@ -89,11 +89,7 @@ fn sexpr(
             just(')')
                 .map(|_| Ok(()))
                 .or_else(|err| Ok(Err(err)))
-                .validate(|result, _span, emit| {
-                    if let Err(err) = result {
-                        emit(err)
-                    }
-                }),
+                .validate(|result, _span, emit| result.map_err(emit)),
         )
 }
 
