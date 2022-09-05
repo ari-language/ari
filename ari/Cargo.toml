@@ -9,4 +9,6 @@ license = "GPL-3.0-or-later"
 chumsky = "0.8.0"
 num-bigint = "0.4.3"
 num-traits = "0.2.15"
-vec1 = "1.8.0"
+
+[dev-dependencies]
+pretty_assertions = "1.2.1"

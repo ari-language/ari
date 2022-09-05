@@ -1,3 +1,5 @@
+use pretty_assertions::assert_eq;
+
 use ari::{
     ast::{Expr, ExprVariant, Label, Scope},
     parser::{parser, Error, ErrorLabel},

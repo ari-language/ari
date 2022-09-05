@@ -1,3 +1,5 @@
+use pretty_assertions::assert_eq;
+
 use ari::parser::{parser, Error, ErrorLabel};
 use chumsky::Parser;
 
