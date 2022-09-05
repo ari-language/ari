@@ -118,6 +118,8 @@ fn must_be_complete() {
         (
             Some(Scope::from_iter([])),
             vec![Error::unexpected_end(7)
+                .with_label(ErrorLabel::Symbol)
+                .with_label(ErrorLabel::Label)
                 .with_label(ErrorLabel::Path)
                 .with_label(ErrorLabel::ExprWithPath)],
         )
@@ -149,6 +151,8 @@ fn cant_have_left_paren() {
         (
             Some(Scope::from_iter([])),
             vec![Error::unexpected_char(7..8, '(')
+                .with_label(ErrorLabel::Symbol)
+                .with_label(ErrorLabel::Label)
                 .with_label(ErrorLabel::Path)
                 .with_label(ErrorLabel::ExprWithPath)],
         )
@@ -162,6 +166,8 @@ fn cant_have_right_paren() {
         (
             Some(Scope::from_iter([])),
             vec![Error::unexpected_char(7..8, ')')
+                .with_label(ErrorLabel::Symbol)
+                .with_label(ErrorLabel::Label)
                 .with_label(ErrorLabel::Path)
                 .with_label(ErrorLabel::ExprWithPath)],
         )

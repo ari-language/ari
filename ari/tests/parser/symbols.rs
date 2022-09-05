@@ -89,6 +89,8 @@ fn cant_have_colon() {
         (
             Some(Scope::from_iter([])),
             vec![Error::unexpected_end(7)
+                .with_label(ErrorLabel::Symbol)
+                .with_label(ErrorLabel::Label)
                 .with_label(ErrorLabel::Path)
                 .with_label(ErrorLabel::ExprWithPath)],
         )

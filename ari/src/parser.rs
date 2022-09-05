@@ -17,21 +17,18 @@ pub fn parser() -> impl Parser<char, Scope, Error = Error> {
         let base_expr = choice((
             sexpr(expr)
                 .map(ExprVariant::SExpr)
-                .map_with_span(Expr::with_span)
-                .labelled(ErrorLabel::SExpr),
+                .map_with_span(Expr::with_span),
             natural()
                 .map(ExprVariant::Natural)
-                .map_with_span(Expr::with_span)
-                .labelled(ErrorLabel::Natural),
+                .map_with_span(Expr::with_span),
             symbol()
                 .map(Symbol::Unresolved)
                 .map(ExprVariant::Symbol)
-                .map_with_span(Expr::with_span)
-                .labelled(ErrorLabel::Symbol),
+                .map_with_span(Expr::with_span),
         ));
 
         let expr_with_path = base_expr
-            .then(path().or_not().labelled(ErrorLabel::Path))
+            .then(path().or_not())
             .validate(|(expr, path), _span, emit| match path {
                 Some(path) => path.and_then(|path| {
                     expr.with_path(path, 0).map_err(|(path, depth)| {
@@ -43,7 +40,6 @@ pub fn parser() -> impl Parser<char, Scope, Error = Error> {
             .labelled(ErrorLabel::ExprWithPath);
 
         let labels_with_expr = label()
-            .labelled(ErrorLabel::Label)
             .separated_by(text::whitespace())
             .at_least(1)
             .collect::<Result<Box<[Label]>, ()>>()
@@ -91,22 +87,28 @@ fn sexpr(
                 .or_else(|err| Ok(Err(err)))
                 .validate(|result, _span, emit| result.map_err(emit)),
         )
+        .labelled(ErrorLabel::SExpr)
 }
 
-fn path() -> impl Parser<char, Result<Box<Path>, ()>, Error = Error> + Copy + Clone {
-    label().repeated().at_least(1).collect()
+fn path() -> impl Parser<char, Result<Box<Path>, ()>, Error = Error> + Clone {
+    label()
+        .repeated()
+        .at_least(1)
+        .collect()
+        .labelled(ErrorLabel::Path)
 }
 
-fn label() -> impl Parser<char, Result<Label, ()>, Error = Error> + Copy + Clone {
+fn label() -> impl Parser<char, Result<Label, ()>, Error = Error> + Clone {
     just(':')
         .ignore_then(symbol().map(Ok).or_else(|err| Ok(Err(err))))
         .validate(|symbol, span, emit| match symbol {
             Ok(symbol) => Ok(Label::new(span, symbol)),
             Err(err) => Err(emit(err)),
         })
+        .labelled(ErrorLabel::Label)
 }
 
-fn natural() -> impl Parser<char, Natural, Error = Error> + Copy + Clone {
+fn natural() -> impl Parser<char, Natural, Error = Error> + Clone {
     // TODO: Support underscore for separator
     // TODO: Manually build natural from digits to avoid overhead of
     // converting to string + parse
@@ -123,10 +125,15 @@ fn natural() -> impl Parser<char, Natural, Error = Error> + Copy + Clone {
         text::int(10).map(|s: String| BigUint::from_str_radix(&s, 10).unwrap()),
     ))
     .map(Natural::from)
+    .labelled(ErrorLabel::Natural)
 }
 
-fn symbol() -> impl Parser<char, String, Error = Error> + Copy + Clone {
-    filter(symbol_char).repeated().at_least(1).collect()
+fn symbol() -> impl Parser<char, String, Error = Error> + Clone {
+    filter(symbol_char)
+        .repeated()
+        .at_least(1)
+        .collect()
+        .labelled(ErrorLabel::Symbol)
 }
 
 fn symbol_char(c: &char) -> bool {

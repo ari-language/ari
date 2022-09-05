@@ -66,6 +66,7 @@ fn must_have_name() {
         (
             Some(Scope::from_iter([])),
             vec![Error::unexpected_end(1)
+                .with_label(ErrorLabel::Symbol)
                 .with_label(ErrorLabel::Label)
                 .with_label(ErrorLabel::LabelsWithExpr)],
         )
@@ -93,6 +94,7 @@ fn names_cant_have_colon() {
                 ExprVariant::Natural(256u16.into())
             )])),
             vec![Error::unexpected_char(1..2, ':')
+                .with_label(ErrorLabel::Symbol)
                 .with_label(ErrorLabel::Label)
                 .with_label(ErrorLabel::LabelsWithExpr)],
         )
@@ -109,6 +111,7 @@ fn names_cant_have_left_paren() {
                 ExprVariant::Natural(256u16.into())
             )])),
             vec![Error::unexpected_char(1..2, '(')
+                .with_label(ErrorLabel::Symbol)
                 .with_label(ErrorLabel::Label)
                 .with_label(ErrorLabel::LabelsWithExpr)],
         )
@@ -125,6 +128,7 @@ fn names_cant_have_right_paren() {
                 ExprVariant::Natural(256u16.into())
             )])),
             vec![Error::unexpected_char(1..2, ')')
+                .with_label(ErrorLabel::Symbol)
                 .with_label(ErrorLabel::Label)
                 .with_label(ErrorLabel::LabelsWithExpr)],
         )
