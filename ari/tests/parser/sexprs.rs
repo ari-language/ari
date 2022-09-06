@@ -10,28 +10,6 @@ use chumsky::Parser;
 #[test]
 fn sexpr() {
     assert_eq!(
-        parser().parse_recovery("()"),
-        (
-            Some(Scope::from_iter([Expr::new(
-                0..2,
-                ExprVariant::SExpr(Scope::from_iter([]))
-            )])),
-            vec![],
-        )
-    );
-
-    assert_eq!(
-        parser().parse_recovery("( )"),
-        (
-            Some(Scope::from_iter([Expr::new(
-                0..3,
-                ExprVariant::SExpr(Scope::from_iter([]))
-            )])),
-            vec![],
-        )
-    );
-
-    assert_eq!(
         parser().parse_recovery("(* :r 256 :g 256 :b 256)"),
         (
             Some(Scope::from_iter([Expr::new(
@@ -49,7 +27,38 @@ fn sexpr() {
             vec![],
         )
     );
+}
 
+#[test]
+fn empty() {
+    assert_eq!(
+        parser().parse_recovery("()"),
+        (
+            Some(Scope::from_iter([Expr::new(
+                0..2,
+                ExprVariant::SExpr(Scope::from_iter([]))
+            )])),
+            vec![],
+        )
+    );
+}
+
+#[test]
+fn empty_with_padding() {
+    assert_eq!(
+        parser().parse_recovery("( )"),
+        (
+            Some(Scope::from_iter([Expr::new(
+                0..3,
+                ExprVariant::SExpr(Scope::from_iter([]))
+            )])),
+            vec![],
+        )
+    );
+}
+
+#[test]
+fn cant_have_left_paren() {
     assert_eq!(
         parser().parse_recovery("("),
         (
@@ -62,7 +71,10 @@ fn sexpr() {
                 .with_label(ErrorLabel::ExprWithPath)],
         )
     );
+}
 
+#[test]
+fn cant_have_right_paren() {
     assert_eq!(
         parser().parse_recovery(")"),
         (
