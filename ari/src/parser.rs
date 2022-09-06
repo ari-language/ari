@@ -28,14 +28,13 @@ pub fn parser() -> impl Parser<char, Scope, Error = Error> {
         ));
 
         let expr_with_path = base_expr
-            .then(path().or_not())
-            .validate(|(expr, path), _span, emit| match path {
-                Some(path) => path.and_then(|path| {
+            .then(path())
+            .validate(|(expr, path), _span, emit| {
+                path.and_then(|path| {
                     expr.with_path(path, 0).map_err(|(path, depth)| {
                         emit(Error::invalid_path(path_span(&path[depth..])))
                     })
-                }),
-                None => Ok(expr),
+                })
             })
             .labelled(ErrorLabel::ExprWithPath);
 
@@ -93,11 +92,7 @@ fn scope(
 }
 
 fn path() -> impl Parser<char, Result<Box<Path>, ()>, Error = Error> + Clone {
-    label()
-        .repeated()
-        .at_least(1)
-        .collect()
-        .labelled(ErrorLabel::Path)
+    label().repeated().collect().labelled(ErrorLabel::Path)
 }
 
 fn label() -> impl Parser<char, Result<Label, ()>, Error = Error> + Clone {
