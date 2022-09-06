@@ -126,18 +126,15 @@ impl Expr {
         start..self.span.end
     }
 
-    fn implicit_label(&self) -> Option<&str> {
-        match &self.variant {
-            ExprVariant::Symbol(symbol) => Some(symbol.implicit_label()),
-            ExprVariant::Natural(_) | ExprVariant::SExpr(_) => None,
-        }
+    pub fn with_path(self, path: Box<Path>) -> Result<Expr, Range<usize>> {
+        self.with_path_rec(path, 0).map_err(|(path, depth)| {
+            let start = path.get(depth).unwrap().span.start;
+            let end = path.last().unwrap().span.end;
+            start..end
+        })
     }
 
-    pub(crate) fn with_path(
-        self,
-        path: Box<Path>,
-        depth: usize,
-    ) -> Result<Expr, (Box<Path>, usize)> {
+    fn with_path_rec(self, path: Box<Path>, depth: usize) -> Result<Expr, (Box<Path>, usize)> {
         Ok(match path.get(depth) {
             Some(Label { symbol, .. }) => Expr {
                 span: self.span.start..path.last().unwrap().span.end,
@@ -164,7 +161,7 @@ impl Expr {
                                 .into_iter()
                                 .nth(index)
                                 .unwrap()
-                                .with_path(path, depth + 1)?
+                                .with_path_rec(path, depth + 1)?
                                 .variant
                         }
                         None => return Err((path, depth)),
@@ -174,6 +171,13 @@ impl Expr {
             },
             None => self,
         })
+    }
+
+    fn implicit_label(&self) -> Option<&str> {
+        match &self.variant {
+            ExprVariant::Symbol(symbol) => Some(symbol.implicit_label()),
+            ExprVariant::Natural(_) | ExprVariant::SExpr(_) => None,
+        }
     }
 }
 
@@ -236,17 +240,5 @@ impl Symbol {
 }
 
 pub type Path = [Label];
-
-pub fn path_span(path: &Path) -> Range<usize> {
-    let start = path
-        .first()
-        .expect("at least one symbol in path")
-        .span
-        .start;
-
-    let end = path.last().expect("at least one symbol in path").span.end;
-
-    start..end
-}
 
 pub type ResolvedPath = [usize];

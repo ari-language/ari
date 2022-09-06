@@ -7,7 +7,7 @@ use num_bigint::BigUint;
 use num_traits::Num;
 
 use crate::{
-    ast::{path_span, Expr, Label, Path, Scope},
+    ast::{Expr, Label, Path, Scope},
     natural::Natural,
 };
 
@@ -76,8 +76,8 @@ fn expr_with_path(
     expr.then(path())
         .validate(|(expr, path), _span, emit| {
             path.and_then(|path| {
-                expr.with_path(path, 0)
-                    .map_err(|(path, depth)| emit(Error::invalid_path(path_span(&path[depth..]))))
+                expr.with_path(path)
+                    .map_err(|span| emit(Error::invalid_path(span)))
             })
         })
         .labelled(ErrorLabel::ExprWithPath)
