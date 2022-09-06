@@ -14,7 +14,7 @@ use crate::{
 // TODO: Ref, Deref, extended labels & text expressions
 pub fn parser() -> impl Parser<char, Scope, Error = Error> {
     let expr = recursive(|expr| {
-        let base_expr = choice((
+        labels_with_expr(expr_with_path(choice((
             sexpr(expr)
                 .map(ExprVariant::SExpr)
                 .map_with_span(Expr::with_span),
@@ -25,38 +25,7 @@ pub fn parser() -> impl Parser<char, Scope, Error = Error> {
                 .map(Symbol::Unresolved)
                 .map(ExprVariant::Symbol)
                 .map_with_span(Expr::with_span),
-        ));
-
-        let expr_with_path = base_expr
-            .then(path())
-            .validate(|(expr, path), _span, emit| {
-                path.and_then(|path| {
-                    expr.with_path(path, 0).map_err(|(path, depth)| {
-                        emit(Error::invalid_path(path_span(&path[depth..])))
-                    })
-                })
-            })
-            .labelled(ErrorLabel::ExprWithPath);
-
-        let labels_with_expr = label()
-            .separated_by(text::whitespace())
-            .at_least(1)
-            .collect::<Result<Box<[Label]>, ()>>()
-            .then_ignore(required_whitespace().or(end()))
-            .then(expr_with_path.clone().map(Ok).or(end().map(Err)))
-            .validate(|(labels, expr), span, emit| match labels {
-                Ok(labels) => match expr {
-                    Ok(expr) => expr.map(|expr| {
-                        debug_assert!(expr.labels.is_empty());
-                        Expr::with_labels(expr, labels)
-                    }),
-                    Err(()) => Err(emit(Error::unexpected_end(span.end))),
-                },
-                Err(()) => expr.and_then(|expr| expr),
-            })
-            .labelled(ErrorLabel::LabelsWithExpr);
-
-        choice((labels_with_expr, expr_with_path))
+        ))))
     });
 
     let trailing_right_parens = just(')')
@@ -66,6 +35,57 @@ pub fn parser() -> impl Parser<char, Scope, Error = Error> {
     scope(expr)
         .then_ignore(trailing_right_parens)
         .then_ignore(end())
+}
+
+fn labels_with_expr(
+    expr: impl Parser<char, Result<Expr, ()>, Error = Error> + Clone,
+) -> impl Parser<char, Result<Expr, ()>, Error = Error> + Clone {
+    let labels_with_expr = label()
+        .separated_by(text::whitespace())
+        .at_least(1)
+        .collect::<Result<Box<[Label]>, ()>>()
+        .then_ignore(required_whitespace().or(end()))
+        .then(expr.clone().map(Ok).or(end().map(Err)))
+        .validate(|(labels, expr), span, emit| match labels {
+            Ok(labels) => match expr {
+                Ok(expr) => expr.map(|expr| {
+                    debug_assert!(expr.labels.is_empty());
+                    Expr::with_labels(expr, labels)
+                }),
+                Err(()) => Err(emit(Error::unexpected_end(span.end))),
+            },
+            Err(()) => expr.and_then(|expr| expr),
+        })
+        .labelled(ErrorLabel::LabelsWithExpr);
+
+    choice((labels_with_expr, expr))
+}
+
+fn label() -> impl Parser<char, Result<Label, ()>, Error = Error> + Clone {
+    just(':')
+        .ignore_then(symbol().map(Ok).or_else(|err| Ok(Err(err))))
+        .validate(|symbol, span, emit| match symbol {
+            Ok(symbol) => Ok(Label::new(span, symbol)),
+            Err(err) => Err(emit(err)),
+        })
+        .labelled(ErrorLabel::Label)
+}
+
+fn expr_with_path(
+    expr: impl Parser<char, Expr, Error = Error> + Clone,
+) -> impl Parser<char, Result<Expr, ()>, Error = Error> + Clone {
+    expr.then(path())
+        .validate(|(expr, path), _span, emit| {
+            path.and_then(|path| {
+                expr.with_path(path, 0)
+                    .map_err(|(path, depth)| emit(Error::invalid_path(path_span(&path[depth..]))))
+            })
+        })
+        .labelled(ErrorLabel::ExprWithPath)
+}
+
+fn path() -> impl Parser<char, Result<Box<Path>, ()>, Error = Error> + Clone {
+    label().repeated().collect().labelled(ErrorLabel::Path)
 }
 
 fn sexpr(
@@ -89,20 +109,6 @@ fn scope(
         .flatten()
         .collect()
         .padded()
-}
-
-fn path() -> impl Parser<char, Result<Box<Path>, ()>, Error = Error> + Clone {
-    label().repeated().collect().labelled(ErrorLabel::Path)
-}
-
-fn label() -> impl Parser<char, Result<Label, ()>, Error = Error> + Clone {
-    just(':')
-        .ignore_then(symbol().map(Ok).or_else(|err| Ok(Err(err))))
-        .validate(|symbol, span, emit| match symbol {
-            Ok(symbol) => Ok(Label::new(span, symbol)),
-            Err(err) => Err(emit(err)),
-        })
-        .labelled(ErrorLabel::Label)
 }
 
 fn natural() -> impl Parser<char, Natural, Error = Error> + Clone {
