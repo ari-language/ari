@@ -71,7 +71,9 @@
         devShells.default = packages.default.overrideAttrs (attrs: {
           doCheck = true;
           checkInputs = with pkgs; [
+            cargo-tarpaulin
             checker.packages
+            clippy
             nodePackages.markdown-link-check
           ];
         });
