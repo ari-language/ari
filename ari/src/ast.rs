@@ -115,52 +115,41 @@ impl Expr {
         path: Box<Path>,
         depth: usize,
     ) -> Result<Expr, (Box<Path>, usize)> {
-        let end = path
-            .last()
-            .map(|Label { span, .. }| span.end)
-            .unwrap_or(self.span.end);
-
-        Ok(Expr {
-            span: self.span.start..end,
-            variant: match self.variant {
-                ExprVariant::Natural(natural) => ExprVariant::Natural(match depth < path.len() {
-                    true => return Err((path, depth)),
-                    false => natural,
-                }),
-                ExprVariant::Symbol(symbol) => ExprVariant::Symbol(match depth < path.len() {
-                    // into_vec: https://github.com/rust-lang/rust/issues/59878
-                    true => Symbol::UnresolvedPath(match symbol {
-                        Symbol::Unresolved(symbol) => [Label::new(self.span, symbol)]
-                            .into_iter()
-                            .chain(path.into_vec().into_iter().skip(depth))
-                            .collect(),
-                        Symbol::UnresolvedPath(orig_path) => orig_path
-                            .into_vec()
-                            .into_iter()
-                            .chain(path.into_vec().into_iter().skip(depth))
-                            .collect(),
-                        Symbol::Resolved(_) => unreachable!(),
-                    }),
-                    false => symbol,
-                }),
-                ExprVariant::SExpr(scope) => match path.get(depth) {
-                    Some(Label { symbol, .. }) => {
-                        match scope.expr_from_label.get(symbol).copied() {
-                            Some(index) => {
-                                scope
-                                    .into_iter()
-                                    .nth(index)
-                                    .unwrap()
-                                    .with_path(path, depth + 1)?
-                                    .variant
-                            }
-                            None => return Err((path, depth)),
-                        }
+        Ok(match path.get(depth) {
+            Some(Label { symbol, .. }) => Expr {
+                span: self.span.start..path.last().unwrap().span.end,
+                variant: match self.variant {
+                    ExprVariant::Natural(_) => return Err((path, depth)),
+                    ExprVariant::Symbol(symbol) => {
+                        ExprVariant::Symbol(Symbol::UnresolvedPath(match symbol {
+                            // into_vec: https://github.com/rust-lang/rust/issues/59878
+                            Symbol::Unresolved(symbol) => [Label::new(self.span, symbol)]
+                                .into_iter()
+                                .chain(path.into_vec().into_iter().skip(depth))
+                                .collect(),
+                            Symbol::UnresolvedPath(orig_path) => orig_path
+                                .into_vec()
+                                .into_iter()
+                                .chain(path.into_vec().into_iter().skip(depth))
+                                .collect(),
+                            Symbol::Resolved(_) => unreachable!(),
+                        }))
                     }
-                    None => ExprVariant::SExpr(scope),
+                    ExprVariant::SExpr(scope) => match scope.expr_from_label.get(symbol).copied() {
+                        Some(index) => {
+                            scope
+                                .into_iter()
+                                .nth(index)
+                                .unwrap()
+                                .with_path(path, depth + 1)?
+                                .variant
+                        }
+                        None => return Err((path, depth)),
+                    },
                 },
+                labels: self.labels,
             },
-            labels: self.labels,
+            None => self,
         })
     }
 }
