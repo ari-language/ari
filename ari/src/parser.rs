@@ -47,17 +47,20 @@ fn labels_with_expr(
         .separated_by(text::whitespace())
         .at_least(1)
         .collect::<Result<Box<[Label]>, ()>>()
-        .then_ignore(required_whitespace().or(end()))
-        .then(expr.clone().map(Ok).or(end().map(Err)))
+        .then_ignore(required_whitespace().or_not())
+        .then(expr.clone().or_not())
         .validate(|(labels, expr), span, emit| match labels {
             Ok(labels) => match expr {
-                Ok(expr) => expr.map(|expr| {
+                Some(expr) => expr.map(|expr| {
                     debug_assert!(expr.labels.is_empty());
                     Expr::with_labels(expr, labels)
                 }),
-                Err(()) => Err(emit(Error::unexpected_end(span.end))),
+                None => Err(emit(Error::unexpected_end(span.end))),
             },
-            Err(()) => expr.and_then(|expr| expr),
+            Err(()) => match expr {
+                Some(expr) => expr,
+                None => Err(()),
+            },
         })
         .labelled(ErrorLabel::LabelsWithExpr);
 

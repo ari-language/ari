@@ -62,10 +62,10 @@ fn multiple_chained() {
 #[test]
 fn must_have_name() {
     assert_eq!(
-        parser().parse_recovery(":"),
+        parser().parse_recovery(": "),
         (
             Some(Scope::from_iter([])),
-            vec![Error::unexpected_end(1)
+            vec![Error::unexpected_char(1..2, ' ')
                 .with_label(ErrorLabel::Symbol)
                 .with_label(ErrorLabel::Label)
                 .with_label(ErrorLabel::LabelsWithExpr)],
@@ -75,21 +75,19 @@ fn must_have_name() {
 
 #[test]
 fn must_have_name_in_sexpr() {
-    // FIXME: Trailing garbage is a terrible error here, it should be
-    // consistent with must_have_name
     assert_eq!(
         parser().parse_recovery("(: )"),
         (
             Some(Scope::from_iter([Expr::new(
-                0..2,
+                0..4,
                 ExprVariant::SExpr(Scope::from_iter([]))
             )])),
-            vec![
-                Error::unexpected_char(1..2, ':')
-                    .with_label(ErrorLabel::SExpr)
-                    .with_label(ErrorLabel::ExprWithPath),
-                Error::trailing_garbage(3..4)
-            ],
+            vec![Error::unexpected_char(2..3, ' ')
+                .with_label(ErrorLabel::Symbol)
+                .with_label(ErrorLabel::Label)
+                .with_label(ErrorLabel::LabelsWithExpr)
+                .with_label(ErrorLabel::SExpr)
+                .with_label(ErrorLabel::ExprWithPath)],
         )
     );
 }
@@ -107,21 +105,17 @@ fn must_have_associated_expr() {
 
 #[test]
 fn must_have_associated_expr_in_sexpr() {
-    // FIXME: Trailing garbage is a terrible error here, it should be
-    // consistent with must_have_associated_expr
     assert_eq!(
         parser().parse_recovery("(:label )"),
         (
             Some(Scope::from_iter([Expr::new(
-                0..2,
+                0..9,
                 ExprVariant::SExpr(Scope::from_iter([]))
             )])),
-            vec![
-                Error::unexpected_char(1..2, ':')
-                    .with_label(ErrorLabel::SExpr)
-                    .with_label(ErrorLabel::ExprWithPath),
-                Error::trailing_garbage(2..9)
-            ]
+            vec![Error::unexpected_end(8)
+                .with_label(ErrorLabel::LabelsWithExpr)
+                .with_label(ErrorLabel::SExpr)
+                .with_label(ErrorLabel::ExprWithPath)]
         )
     );
 }
