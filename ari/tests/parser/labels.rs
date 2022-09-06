@@ -74,12 +74,54 @@ fn must_have_name() {
 }
 
 #[test]
+fn must_have_name_in_sexpr() {
+    // FIXME: Trailing garbage is a terrible error here, it should be
+    // consistent with must_have_name
+    assert_eq!(
+        parser().parse_recovery("(: )"),
+        (
+            Some(Scope::from_iter([Expr::new(
+                0..2,
+                ExprVariant::SExpr(Scope::from_iter([]))
+            )])),
+            vec![
+                Error::unexpected_char(1..2, ':')
+                    .with_label(ErrorLabel::SExpr)
+                    .with_label(ErrorLabel::ExprWithPath),
+                Error::trailing_garbage(3..4)
+            ],
+        )
+    );
+}
+
+#[test]
 fn must_have_associated_expr() {
     assert_eq!(
         parser().parse_recovery(":label "),
         (
             Some(Scope::from_iter([])),
             vec![Error::unexpected_end(7).with_label(ErrorLabel::LabelsWithExpr)]
+        )
+    );
+}
+
+#[test]
+fn must_have_associated_expr_in_sexpr() {
+    // FIXME: Trailing garbage is a terrible error here, it should be
+    // consistent with must_have_associated_expr
+    assert_eq!(
+        parser().parse_recovery("(:label )"),
+        (
+            Some(Scope::from_iter([Expr::new(
+                0..2,
+                ExprVariant::SExpr(Scope::from_iter([]))
+            )])),
+            vec![
+                Error::unexpected_char(1..2, ':')
+                    .with_label(ErrorLabel::SExpr)
+                    .with_label(ErrorLabel::ExprWithPath),
+                Error::trailing_garbage(2..9)
+            ]
         )
     );
 }
