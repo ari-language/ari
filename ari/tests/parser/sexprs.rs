@@ -79,7 +79,7 @@ fn cant_have_right_paren() {
         parser().parse_recovery(")"),
         (
             Some(Scope::from_iter([])),
-            vec![Error::unexpected_char(0..1, ')')],
+            vec![Error::trailing_garbage(0..1)],
         )
     );
 }

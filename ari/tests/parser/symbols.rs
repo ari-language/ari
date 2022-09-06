@@ -101,7 +101,13 @@ fn cant_have_colon() {
 fn cant_have_left_paren() {
     assert_eq!(
         parser().parse_recovery("symbol("),
-        (None, vec![Error::unexpected_char(6..7, '(')])
+        (
+            Some(Scope::from_iter([Expr::new(
+                0..6,
+                ExprVariant::Symbol(Symbol::unresolved("symbol"))
+            )])),
+            vec![Error::trailing_garbage(6..7)],
+        )
     );
 }
 
@@ -114,7 +120,7 @@ fn cant_have_right_paren() {
                 0..6,
                 ExprVariant::Symbol(Symbol::unresolved("symbol"))
             )])),
-            vec![Error::unexpected_char(6..7, ')')]
+            vec![Error::trailing_garbage(6..7)],
         ),
     );
 }

@@ -28,13 +28,16 @@ pub fn parser() -> impl Parser<char, Scope, Error = Error> {
         ))))
     });
 
-    let trailing_right_parens = just(')')
-        .validate(|c, span, emit| emit(Error::unexpected_char(span, c)))
-        .repeated();
+    let trailing_garbage = any()
+        .ignored()
+        .repeated()
+        .validate(|trailing_garbage, span, emit| {
+            if !trailing_garbage.is_empty() {
+                emit(Error::trailing_garbage(span))
+            }
+        });
 
-    scope(expr)
-        .then_ignore(trailing_right_parens)
-        .then_ignore(end())
+    scope(expr).then_ignore(trailing_garbage)
 }
 
 fn labels_with_expr(
@@ -186,6 +189,14 @@ impl Error {
         }
     }
 
+    pub fn trailing_garbage(span: Range<usize>) -> Self {
+        Self {
+            variant: ErrorVariant::TrailingGarbage,
+            span,
+            trace: Vec::new(),
+        }
+    }
+
     pub fn with_label(mut self, label: ErrorLabel) -> Self {
         self.trace.push(label);
         self
@@ -224,6 +235,7 @@ pub enum ErrorVariant {
     UnexpectedChar(Option<char>),
     DuplicateLabel(Range<usize>),
     InvalidPath,
+    TrailingGarbage,
 }
 
 #[derive(Debug, PartialEq, Eq, Clone)]

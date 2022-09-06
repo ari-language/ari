@@ -112,9 +112,15 @@ fn supports_big_naturals_that_fit_in_memory() {
 
 #[test]
 fn cant_have_zero_prefix() {
-    // TODO: Error recovery by skipping over to end of next whitespace
+    // TODO: Give better error than just trailing garbage
     assert_eq!(
         parser().parse_recovery("0123456789"),
-        (None, vec![Error::unexpected_char(1..2, '1')],)
+        (
+            Some(Scope::from_iter([Expr::new(
+                0..1,
+                ExprVariant::Natural(0u8.into())
+            )])),
+            vec![Error::trailing_garbage(1..10)]
+        )
     );
 }
