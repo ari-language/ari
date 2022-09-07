@@ -7,7 +7,7 @@ use num_bigint::BigUint;
 use num_traits::Num;
 
 use crate::{
-    ast::{Expr, ExprVariant, Label, Path, Scope, Symbol},
+    ast::{Expr, ExprVariant, Label, Path, Scope, ScopeError, Symbol},
     natural::Natural,
 };
 
@@ -111,7 +111,15 @@ fn scope(
 ) -> impl Parser<char, Scope, Error = Error> + Clone {
     expr.separated_by(required_whitespace())
         .flatten()
-        .collect()
+        .validate(|exprs, _span, emit| {
+            Scope::try_from_exprs_with_emit(exprs, &mut |err| {
+                emit(match err {
+                    ScopeError::DuplicateLabel(span, other_span) => {
+                        Error::duplicate_label(span, other_span)
+                    }
+                })
+            })
+        })
         .padded()
 }
 
@@ -178,6 +186,14 @@ impl Error {
         Self {
             variant: ErrorVariant::UnexpectedChar(None),
             span: pos..pos,
+            trace: Vec::new(),
+        }
+    }
+
+    pub fn duplicate_label(span: Range<usize>, other_span: Range<usize>) -> Self {
+        Self {
+            variant: ErrorVariant::DuplicateLabel(other_span),
+            span,
             trace: Vec::new(),
         }
     }

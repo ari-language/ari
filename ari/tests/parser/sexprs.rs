@@ -12,16 +12,20 @@ fn sexpr() {
     assert_eq!(
         parser().parse_recovery("(* :r 256 :g 256 :b 256)"),
         (
-            Some(Scope::from_exprs([Expr::sexpr(
-                0..24,
-                [],
-                [
-                    Expr::symbol(1..2, [], "*"),
-                    Expr::natural(6..9, [Label::new(3..5, "r")], 256u16),
-                    Expr::natural(13..16, [Label::new(10..12, "g")], 256u16),
-                    Expr::natural(20..23, [Label::new(17..19, "b")], 256u16),
-                ],
-            )])),
+            Some(
+                Scope::try_from_exprs([Expr::sexpr(
+                    0..24,
+                    [],
+                    Scope::try_from_exprs([
+                        Expr::symbol(1..2, [], "*"),
+                        Expr::natural(6..9, [Label::new(3..5, "r")], 256u16),
+                        Expr::natural(13..16, [Label::new(10..12, "g")], 256u16),
+                        Expr::natural(20..23, [Label::new(17..19, "b")], 256u16),
+                    ])
+                    .scope,
+                )])
+                .scope
+            ),
             vec![],
         )
     );
@@ -31,7 +35,13 @@ fn sexpr() {
 fn empty() {
     assert_eq!(
         parser().parse_recovery("()"),
-        (Some(Scope::from_exprs([Expr::sexpr(0..2, [], [])])), vec![])
+        (
+            Some(
+                Scope::try_from_exprs([Expr::sexpr(0..2, [], Scope::try_from_exprs([]).scope)])
+                    .scope
+            ),
+            vec![]
+        )
     );
 }
 
@@ -39,7 +49,13 @@ fn empty() {
 fn empty_with_padding() {
     assert_eq!(
         parser().parse_recovery("( )"),
-        (Some(Scope::from_exprs([Expr::sexpr(0..3, [], [])])), vec![])
+        (
+            Some(
+                Scope::try_from_exprs([Expr::sexpr(0..3, [], Scope::try_from_exprs([]).scope)])
+                    .scope
+            ),
+            vec![]
+        )
     );
 }
 
@@ -48,7 +64,10 @@ fn cant_have_left_paren() {
     assert_eq!(
         parser().parse_recovery("("),
         (
-            Some(Scope::from_exprs([Expr::sexpr(0..1, [], [])])),
+            Some(
+                Scope::try_from_exprs([Expr::sexpr(0..1, [], Scope::try_from_exprs([]).scope)])
+                    .scope
+            ),
             vec![Error::unexpected_end(1)
                 .with_label(ErrorLabel::SExpr)
                 .with_label(ErrorLabel::ExprWithPath)],
@@ -61,7 +80,7 @@ fn cant_have_right_paren() {
     assert_eq!(
         parser().parse_recovery(")"),
         (
-            Some(Scope::from_exprs([])),
+            Some(Scope::try_from_exprs([]).scope),
             vec![Error::trailing_garbage(0..1)],
         )
     );

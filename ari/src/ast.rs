@@ -1,38 +1,54 @@
-use std::{collections::HashMap, ops::Range, vec::IntoIter};
+use std::{collections::HashMap, hash::Hash, ops::Range, vec::IntoIter};
 
 use crate::natural::Natural;
 
-#[derive(Debug, Clone, PartialEq, Eq, Default)]
+#[derive(Debug, Clone, Eq, Default)]
 pub struct Scope {
     exprs: Box<[Expr]>,
-    expr_from_label: HashMap<String, usize>,
+    expr_from_label: HashMap<Label, usize>,
 }
 
 impl Scope {
-    pub fn from_exprs<E: IntoIterator<Item = Expr>>(exprs: E) -> Self {
-        let mut expr_from_label = HashMap::<String, usize>::new();
-        let mut expr_from_implicit_label = HashMap::<String, Vec<usize>>::new();
+    pub fn try_from_exprs(iter: impl IntoIterator<Item = Expr>) -> ScopeResult {
+        let mut errors = Vec::new();
+        let scope = Self::try_from_exprs_with_emit(iter, &mut |err| errors.push(err));
+        ScopeResult {
+            scope,
+            errors: errors.into_boxed_slice(),
+        }
+    }
 
-        let exprs = exprs
+    pub fn try_from_exprs_with_emit(
+        iter: impl IntoIterator<Item = Expr>,
+        emit: &mut dyn FnMut(ScopeError),
+    ) -> Self {
+        let mut expr_from_label = HashMap::<Label, usize>::new();
+        let mut expr_from_implicit_label = HashMap::<Label, Option<usize>>::new();
+
+        let exprs = iter
             .into_iter()
             .enumerate()
-            .map(|(i, expr)| {
-                for Label { symbol, .. } in expr.labels.iter() {
-                    // TODO: Figure out how to emit duplicate error in here
-                    if !expr_from_label.contains_key(symbol) {
-                        expr_from_label.insert(symbol.clone(), i);
+            .map(|(expr_ref, expr)| {
+                for label in expr.labels.iter() {
+                    if let Some((other_label, _)) = expr_from_label.get_key_value(label) {
+                        emit(ScopeError::DuplicateLabel(
+                            label.span.clone(),
+                            other_label.span.clone(),
+                        ));
+                    } else {
+                        expr_from_label.insert(label.clone(), expr_ref);
                     }
                 }
 
                 // If there are no explicit labels, try to use the
                 // expression's implicit label
-                if i > 0 && expr.labels.is_empty() {
-                    if let Some(symbol) = expr.implicit_label() {
-                        if !expr_from_label.contains_key(symbol) {
-                            if let Some(exprs) = expr_from_implicit_label.get_mut(symbol) {
-                                exprs.push(i);
+                if expr_ref > 0 && expr.labels.is_empty() {
+                    if let Some(label) = expr.implicit_label() {
+                        if !expr_from_label.contains_key(&label) {
+                            if let Some(other_expr_ref) = expr_from_implicit_label.get_mut(&label) {
+                                *other_expr_ref = None;
                             } else {
-                                expr_from_implicit_label.insert(symbol.to_owned(), vec![i]);
+                                expr_from_implicit_label.insert(label, Some(expr_ref));
                             }
                         }
                     }
@@ -43,28 +59,16 @@ impl Scope {
             .collect();
 
         // Apply implicit labels that are unique within the scope
-        for (symbol, exprs) in expr_from_implicit_label {
-            if let [i] = exprs[..] {
-                expr_from_label.entry(symbol).or_insert(i);
+        for (label, expr_ref) in expr_from_implicit_label {
+            if let Some(expr_ref) = expr_ref {
+                expr_from_label.entry(label).or_insert(expr_ref);
             }
         }
 
-        Scope {
+        Self {
             exprs, // TODO: Try to resolve all the symbols we can in this scope
             expr_from_label,
         }
-    }
-}
-
-impl<const N: usize> From<[Expr; N]> for Scope {
-    fn from(exprs: [Expr; N]) -> Self {
-        Self::from_exprs(exprs.into_iter())
-    }
-}
-
-impl FromIterator<Expr> for Scope {
-    fn from_iter<T: IntoIterator<Item = Expr>>(iter: T) -> Self {
-        Self::from_exprs(iter)
     }
 }
 
@@ -79,7 +83,25 @@ impl IntoIterator for Scope {
     }
 }
 
+impl PartialEq for Scope {
+    fn eq(&self, other: &Self) -> bool {
+        self.exprs.eq(&other.exprs)
+    }
+}
+
 #[derive(Debug, Clone, PartialEq, Eq)]
+#[must_use = "this `ScopeResult` may have errors, which should be handled"]
+pub struct ScopeResult {
+    pub scope: Scope,
+    pub errors: Box<[ScopeError]>,
+}
+
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub enum ScopeError {
+    DuplicateLabel(Range<usize>, Range<usize>),
+}
+
+#[derive(Debug, Clone, Eq)]
 pub struct Expr<Labels = Box<[Label]>> {
     pub span: Range<usize>,
     pub variant: ExprVariant,
@@ -175,9 +197,18 @@ impl Expr {
         start..self.span.end
     }
 
-    fn implicit_label(&self) -> Option<&str> {
+    fn implicit_label(&self) -> Option<Label> {
         match &self.variant {
-            ExprVariant::Symbol(symbol) => Some(symbol.implicit_label()),
+            ExprVariant::Symbol(symbol) => Some(match symbol {
+                Symbol::Unresolved(symbol) => Label {
+                    span: self.span.clone(),
+                    symbol: symbol.clone(),
+                },
+                Symbol::UnresolvedPath(path) => {
+                    path.last().expect("at least one symbol in path").clone()
+                }
+                Symbol::Resolved(_) => unreachable!(),
+            }),
             ExprVariant::Natural(_) | ExprVariant::SExpr(_) => None,
         }
     }
@@ -186,7 +217,7 @@ impl Expr {
 impl<Labels> Expr<Labels> {
     fn with_path_rec(self, path: Box<Path>, depth: usize) -> Result<Self, (Box<Path>, usize)> {
         Ok(match path.get(depth) {
-            Some(Label { symbol, .. }) => Self {
+            Some(label) => Self {
                 span: self.span.start..path.last().unwrap().span.end,
                 variant: match self.variant {
                     ExprVariant::Natural(_) => return Err((path, depth)),
@@ -205,7 +236,7 @@ impl<Labels> Expr<Labels> {
                             Symbol::Resolved(_) => unreachable!(),
                         }))
                     }
-                    ExprVariant::SExpr(scope) => match scope.expr_from_label.get(symbol).copied() {
+                    ExprVariant::SExpr(scope) => match scope.expr_from_label.get(label).copied() {
                         Some(index) => {
                             scope
                                 .into_iter()
@@ -224,10 +255,28 @@ impl<Labels> Expr<Labels> {
     }
 }
 
-#[derive(Debug, Clone, PartialEq, Eq)]
+impl<Labels: PartialEq> PartialEq for Expr<Labels> {
+    fn eq(&self, other: &Self) -> bool {
+        self.variant.eq(&other.variant) && self.labels.eq(&other.labels)
+    }
+}
+
+#[derive(Debug, Clone, Eq)]
 pub struct Label {
     pub span: Range<usize>,
     pub symbol: String,
+}
+
+impl PartialEq for Label {
+    fn eq(&self, other: &Self) -> bool {
+        self.symbol.eq(&other.symbol)
+    }
+}
+
+impl Hash for Label {
+    fn hash<H: std::hash::Hasher>(&self, state: &mut H) {
+        self.symbol.hash(state)
+    }
 }
 
 impl Label {
@@ -266,19 +315,6 @@ impl Symbol {
 
     pub fn unresolved_path<P: Into<Box<Path>>>(path: P) -> Self {
         Self::UnresolvedPath(path.into())
-    }
-
-    fn implicit_label(&self) -> &str {
-        match self {
-            Symbol::Unresolved(symbol) => symbol,
-            Symbol::UnresolvedPath(path) => path
-                .last()
-                .expect("at least one symbol in path")
-                .symbol
-                .as_str(),
-
-            Symbol::Resolved(_) => unreachable!(),
-        }
     }
 }
 
