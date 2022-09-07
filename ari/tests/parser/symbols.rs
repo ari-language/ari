@@ -12,7 +12,7 @@ fn symbol() {
     assert_eq!(
         parser().parse_recovery("symbol"),
         (
-            Some(Scope::from_exprs([Expr::symbol(0..6, "symbol")])),
+            Some(Scope::from_exprs([Expr::symbol(0..6, [], "symbol")])),
             vec![],
         )
     );
@@ -38,7 +38,11 @@ fn supports_builtin_sexpr_names() {
             (
                 parser().parse_recovery(symbol),
                 (
-                    Some(Scope::from_exprs([Expr::symbol(0..symbol.len(), symbol)])),
+                    Some(Scope::from_exprs([Expr::symbol(
+                        0..symbol.len(),
+                        [],
+                        symbol,
+                    )])),
                     vec![],
                 ),
             )
@@ -52,7 +56,10 @@ fn supports_builtin_sexpr_names() {
 fn supports_almost_all_of_unicode_with_exceptions() {
     assert_eq!(
         parser().parse_recovery("🙃"),
-        (Some(Scope::from_exprs([Expr::symbol(0..1, "🙃")])), vec![])
+        (
+            Some(Scope::from_exprs([Expr::symbol(0..1, [], "🙃")])),
+            vec![]
+        )
     );
 }
 
@@ -61,7 +68,7 @@ fn cant_have_whitespace() {
     assert_eq!(
         parser().parse_recovery("symbol "),
         (
-            Some(Scope::from_exprs([Expr::symbol(0..6, "symbol")])),
+            Some(Scope::from_exprs([Expr::symbol(0..6, [], "symbol")])),
             vec![],
         )
     );
@@ -87,7 +94,7 @@ fn cant_have_left_paren() {
     assert_eq!(
         parser().parse_recovery("symbol("),
         (
-            Some(Scope::from_exprs([Expr::symbol(0..6, "symbol")])),
+            Some(Scope::from_exprs([Expr::symbol(0..6, [], "symbol")])),
             vec![Error::trailing_garbage(6..7)],
         )
     );
@@ -98,7 +105,7 @@ fn cant_have_right_paren() {
     assert_eq!(
         parser().parse_recovery("symbol)"),
         (
-            Some(Scope::from_exprs([Expr::symbol(0..6, "symbol")])),
+            Some(Scope::from_exprs([Expr::symbol(0..6, [], "symbol")])),
             vec![Error::trailing_garbage(6..7)],
         ),
     );

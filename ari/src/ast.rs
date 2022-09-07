@@ -80,40 +80,89 @@ impl IntoIterator for Scope {
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
-pub struct Expr {
+pub struct Expr<Labels = Box<[Label]>> {
     pub span: Range<usize>,
     pub variant: ExprVariant,
-    pub labels: Box<[Label]>,
+    pub labels: Labels,
 }
 
-impl Expr {
-    pub fn variant(span: Range<usize>, variant: ExprVariant) -> Self {
+impl Expr<()> {
+    pub(crate) fn variant(span: Range<usize>, variant: ExprVariant) -> Self {
         Self {
             span,
             variant,
-            labels: Box::new([]),
+            labels: (),
         }
     }
 
-    pub fn natural<N: Into<Natural>>(span: Range<usize>, natural: N) -> Self {
-        Self::variant(span, ExprVariant::Natural(natural.into()))
+    pub(crate) fn with_path(self, path: Box<Path>) -> Result<Self, Range<usize>> {
+        self.with_path_rec(path, 0).map_err(|(path, depth)| {
+            let start = path.get(depth).unwrap().span.start;
+            let end = path.last().unwrap().span.end;
+            start..end
+        })
     }
 
-    pub fn symbol<S: Into<String>>(span: Range<usize>, symbol: S) -> Self {
-        Self::variant(span, ExprVariant::Symbol(Symbol::unresolved(symbol)))
+    pub(crate) fn with_labels(self, labels: Box<[Label]>) -> Expr {
+        Expr {
+            span: self.span,
+            variant: self.variant,
+            labels,
+        }
+    }
+}
+
+impl Expr {
+    pub fn variant<L: Into<Box<[Label]>>>(
+        span: Range<usize>,
+        labels: L,
+        variant: ExprVariant,
+    ) -> Self {
+        Self {
+            span,
+            variant,
+            labels: labels.into(),
+        }
     }
 
-    pub fn path<P: Into<Box<Path>>>(span: Range<usize>, path: P) -> Self {
-        Self::variant(span, ExprVariant::Symbol(Symbol::unresolved_path(path)))
+    pub fn natural<L: Into<Box<[Label]>>, N: Into<Natural>>(
+        span: Range<usize>,
+        labels: L,
+        natural: N,
+    ) -> Self {
+        Self::variant(span, labels, ExprVariant::Natural(natural.into()))
     }
 
-    pub fn sexpr<S: Into<Scope>>(span: Range<usize>, scope: S) -> Self {
-        Self::variant(span, ExprVariant::SExpr(scope.into()))
+    pub fn symbol<L: Into<Box<[Label]>>, S: Into<String>>(
+        span: Range<usize>,
+        labels: L,
+        symbol: S,
+    ) -> Self {
+        Self::variant(
+            span,
+            labels,
+            ExprVariant::Symbol(Symbol::unresolved(symbol)),
+        )
     }
 
-    pub fn with_labels<L: Into<Box<[Label]>>>(mut self, labels: L) -> Self {
-        self.labels = labels.into();
-        self
+    pub fn path<L: Into<Box<[Label]>>, P: Into<Box<Path>>>(
+        span: Range<usize>,
+        labels: L,
+        path: P,
+    ) -> Self {
+        Self::variant(
+            span,
+            labels,
+            ExprVariant::Symbol(Symbol::unresolved_path(path)),
+        )
+    }
+
+    pub fn sexpr<L: Into<Box<[Label]>>, S: Into<Scope>>(
+        span: Range<usize>,
+        labels: L,
+        scope: S,
+    ) -> Self {
+        Self::variant(span, labels, ExprVariant::SExpr(scope.into()))
     }
 
     pub fn span_with_labels(&self) -> Range<usize> {
@@ -126,17 +175,18 @@ impl Expr {
         start..self.span.end
     }
 
-    pub fn with_path(self, path: Box<Path>) -> Result<Expr, Range<usize>> {
-        self.with_path_rec(path, 0).map_err(|(path, depth)| {
-            let start = path.get(depth).unwrap().span.start;
-            let end = path.last().unwrap().span.end;
-            start..end
-        })
+    fn implicit_label(&self) -> Option<&str> {
+        match &self.variant {
+            ExprVariant::Symbol(symbol) => Some(symbol.implicit_label()),
+            ExprVariant::Natural(_) | ExprVariant::SExpr(_) => None,
+        }
     }
+}
 
-    fn with_path_rec(self, path: Box<Path>, depth: usize) -> Result<Expr, (Box<Path>, usize)> {
+impl<Labels> Expr<Labels> {
+    fn with_path_rec(self, path: Box<Path>, depth: usize) -> Result<Self, (Box<Path>, usize)> {
         Ok(match path.get(depth) {
-            Some(Label { symbol, .. }) => Expr {
+            Some(Label { symbol, .. }) => Self {
                 span: self.span.start..path.last().unwrap().span.end,
                 variant: match self.variant {
                     ExprVariant::Natural(_) => return Err((path, depth)),
@@ -171,13 +221,6 @@ impl Expr {
             },
             None => self,
         })
-    }
-
-    fn implicit_label(&self) -> Option<&str> {
-        match &self.variant {
-            ExprVariant::Symbol(symbol) => Some(symbol.implicit_label()),
-            ExprVariant::Natural(_) | ExprVariant::SExpr(_) => None,
-        }
     }
 }
 

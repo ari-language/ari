@@ -14,12 +14,13 @@ fn sexpr() {
         (
             Some(Scope::from_exprs([Expr::sexpr(
                 0..24,
+                [],
                 [
-                    Expr::symbol(1..2, "*"),
-                    Expr::natural(6..9, 256u16).with_labels([Label::new(3..5, "r")]),
-                    Expr::natural(13..16, 256u16).with_labels([Label::new(10..12, "g")]),
-                    Expr::natural(20..23, 256u16).with_labels([Label::new(17..19, "b")]),
-                ]
+                    Expr::symbol(1..2, [], "*"),
+                    Expr::natural(6..9, [Label::new(3..5, "r")], 256u16),
+                    Expr::natural(13..16, [Label::new(10..12, "g")], 256u16),
+                    Expr::natural(20..23, [Label::new(17..19, "b")], 256u16),
+                ],
             )])),
             vec![],
         )
@@ -30,7 +31,7 @@ fn sexpr() {
 fn empty() {
     assert_eq!(
         parser().parse_recovery("()"),
-        (Some(Scope::from_exprs([Expr::sexpr(0..2, [])])), vec![])
+        (Some(Scope::from_exprs([Expr::sexpr(0..2, [], [])])), vec![])
     );
 }
 
@@ -38,7 +39,7 @@ fn empty() {
 fn empty_with_padding() {
     assert_eq!(
         parser().parse_recovery("( )"),
-        (Some(Scope::from_exprs([Expr::sexpr(0..3, [])])), vec![])
+        (Some(Scope::from_exprs([Expr::sexpr(0..3, [], [])])), vec![])
     );
 }
 
@@ -47,7 +48,7 @@ fn cant_have_left_paren() {
     assert_eq!(
         parser().parse_recovery("("),
         (
-            Some(Scope::from_exprs([Expr::sexpr(0..1, [])])),
+            Some(Scope::from_exprs([Expr::sexpr(0..1, [], [])])),
             vec![Error::unexpected_end(1)
                 .with_label(ErrorLabel::SExpr)
                 .with_label(ErrorLabel::ExprWithPath)],
