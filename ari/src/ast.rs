@@ -135,8 +135,8 @@ impl Expr<()> {
 }
 
 impl Expr {
-    pub fn variant<L: Into<Box<[Label]>>>(
-        labels: L,
+    pub fn variant(
+        labels: impl Into<Box<[Label]>>,
         span: Range<usize>,
         variant: ExprVariant,
     ) -> Self {
@@ -147,18 +147,18 @@ impl Expr {
         }
     }
 
-    pub fn natural<L: Into<Box<[Label]>>, N: Into<Natural>>(
-        labels: L,
+    pub fn natural(
+        labels: impl Into<Box<[Label]>>,
         span: Range<usize>,
-        natural: N,
+        natural: impl Into<Natural>,
     ) -> Self {
         Self::variant(labels, span, ExprVariant::Natural(natural.into()))
     }
 
-    pub fn symbol<L: Into<Box<[Label]>>, S: Into<String>>(
-        labels: L,
+    pub fn symbol(
+        labels: impl Into<Box<[Label]>>,
         span: Range<usize>,
-        symbol: S,
+        symbol: impl Into<String>,
     ) -> Self {
         Self::variant(
             labels,
@@ -167,10 +167,10 @@ impl Expr {
         )
     }
 
-    pub fn path<L: Into<Box<[Label]>>, P: Into<Box<Path>>>(
-        labels: L,
+    pub fn path(
+        labels: impl Into<Box<[Label]>>,
         span: Range<usize>,
-        path: P,
+        path: impl Into<Box<Path>>,
     ) -> Self {
         Self::variant(
             labels,
@@ -179,10 +179,10 @@ impl Expr {
         )
     }
 
-    pub fn sexpr<L: Into<Box<[Label]>>, S: Into<Scope>>(
-        labels: L,
+    pub fn sexpr(
+        labels: impl Into<Box<[Label]>>,
         span: Range<usize>,
-        scope: S,
+        scope: impl Into<Scope>,
     ) -> Self {
         Self::variant(labels, span, ExprVariant::SExpr(scope.into()))
     }
@@ -280,7 +280,7 @@ impl Hash for Label {
 }
 
 impl Label {
-    pub fn new<S: Into<String>>(span: Range<usize>, symbol: S) -> Self {
+    pub fn new(span: Range<usize>, symbol: impl Into<String>) -> Self {
         Self {
             span,
             symbol: symbol.into(),
@@ -309,11 +309,11 @@ pub enum Symbol {
 }
 
 impl Symbol {
-    pub fn unresolved<S: Into<String>>(symbol: S) -> Self {
+    pub fn unresolved(symbol: impl Into<String>) -> Self {
         Self::Unresolved(symbol.into())
     }
 
-    pub fn unresolved_path<P: Into<Box<Path>>>(path: P) -> Self {
+    pub fn unresolved_path(path: impl Into<Box<Path>>) -> Self {
         Self::UnresolvedPath(path.into())
     }
 }
