@@ -14,8 +14,8 @@ fn applied_to_symbol() {
         (
             Some(
                 Scope::try_from_exprs([Expr::path(
-                    0..11,
                     [],
+                    0..11,
                     [Label::new(0..6, "symbol"), Label::new(6..11, "path")],
                 )])
                 .scope
@@ -32,8 +32,8 @@ fn applied_to_symbol_chained() {
         (
             Some(
                 Scope::try_from_exprs([Expr::path(
-                    0..12,
                     [],
+                    0..12,
                     [
                         Label::new(0..6, "symbol"),
                         Label::new(6..8, "x"),
@@ -53,7 +53,7 @@ fn applied_to_sexpr() {
     assert_eq!(
         parser().parse_recovery("(* :r 256 :g 256 :b 256):r"),
         (
-            Some(Scope::try_from_exprs([Expr::natural(0..26, [], 256u16)]).scope),
+            Some(Scope::try_from_exprs([Expr::natural([], 0..26, 256u16)]).scope),
             vec![],
         )
     );
@@ -64,7 +64,7 @@ fn applied_to_sexpr_symbol() {
     assert_eq!(
         parser().parse_recovery("(* r g b):r"),
         (
-            Some(Scope::try_from_exprs([Expr::symbol(0..11, [], "r")]).scope),
+            Some(Scope::try_from_exprs([Expr::symbol([], 0..11, "r")]).scope),
             vec![]
         )
     );
@@ -77,8 +77,8 @@ fn applied_to_sexpr_symbol_chained() {
         (
             Some(
                 Scope::try_from_exprs([Expr::path(
-                    0..13,
                     [],
+                    0..13,
                     [
                         Label::new(3..4, "x"),
                         Label::new(7..9, "a"),
@@ -100,8 +100,8 @@ fn applied_to_sexpr_path_chained() {
         (
             Some(
                 Scope::try_from_exprs([Expr::path(
-                    0..17,
                     [],
+                    0..17,
                     [
                         Label::new(3..4, "x"),
                         Label::new(4..6, "y"),
@@ -140,8 +140,8 @@ fn multiple_must_be_chained() {
         (
             Some(
                 Scope::try_from_exprs([Expr::path(
-                    0..10,
                     [],
+                    0..10,
                     [
                         Label::new(0..6, "symbol"),
                         Label::new(6..8, "x"),

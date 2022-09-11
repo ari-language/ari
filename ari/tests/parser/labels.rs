@@ -13,7 +13,7 @@ fn single() {
         parser().parse_recovery(":label 256"),
         (
             Some(
-                Scope::try_from_exprs([Expr::natural(7..10, [Label::new(0..6, "label")], 256u16)])
+                Scope::try_from_exprs([Expr::natural([Label::new(0..6, "label")], 7..10, 256u16)])
                     .scope
             ),
             vec![],
@@ -28,8 +28,8 @@ fn multiple() {
         (
             Some(
                 Scope::try_from_exprs([Expr::natural(
-                    16..19,
                     [Label::new(0..7, "label1"), Label::new(8..15, "label2")],
+                    16..19,
                     256u16,
                 )])
                 .scope
@@ -46,12 +46,12 @@ fn multiple_chained() {
         (
             Some(
                 Scope::try_from_exprs([Expr::natural(
-                    7..10,
                     [
                         Label::new(0..2, "x"),
                         Label::new(2..4, "y"),
                         Label::new(4..6, "z"),
                     ],
+                    7..10,
                     256u16,
                 )])
                 .scope
@@ -66,7 +66,7 @@ fn names_cant_have_colon() {
     assert_eq!(
         parser().parse_recovery(":: 256"),
         (
-            Some(Scope::try_from_exprs([Expr::natural(3..6, [], 256u16)]).scope),
+            Some(Scope::try_from_exprs([Expr::natural([], 3..6, 256u16)]).scope),
             vec![Error::unexpected_char(1..2, ':')
                 .with_label(ErrorLabel::Symbol)
                 .with_label(ErrorLabel::Label)
@@ -80,7 +80,7 @@ fn names_cant_have_left_paren() {
     assert_eq!(
         parser().parse_recovery(":( 256"),
         (
-            Some(Scope::try_from_exprs([Expr::natural(3..6, [], 256u16)]).scope),
+            Some(Scope::try_from_exprs([Expr::natural([], 3..6, 256u16)]).scope),
             vec![Error::unexpected_char(1..2, '(')
                 .with_label(ErrorLabel::Symbol)
                 .with_label(ErrorLabel::Label)
@@ -94,7 +94,7 @@ fn names_cant_have_right_paren() {
     assert_eq!(
         parser().parse_recovery(":) 256"),
         (
-            Some(Scope::try_from_exprs([Expr::natural(3..6, [], 256u16)]).scope),
+            Some(Scope::try_from_exprs([Expr::natural([], 3..6, 256u16)]).scope),
             vec![Error::unexpected_char(1..2, ')')
                 .with_label(ErrorLabel::Symbol)
                 .with_label(ErrorLabel::Label)
@@ -123,7 +123,7 @@ fn must_have_name_in_sexpr() {
         parser().parse_recovery("(: )"),
         (
             Some(
-                Scope::try_from_exprs([Expr::sexpr(0..4, [], Scope::try_from_exprs([]).scope)])
+                Scope::try_from_exprs([Expr::sexpr([], 0..4, Scope::try_from_exprs([]).scope)])
                     .scope
             ),
             vec![Error::unexpected_char(2..3, ' ')
@@ -153,7 +153,7 @@ fn must_have_associated_expr_in_sexpr() {
         parser().parse_recovery("(:label )"),
         (
             Some(
-                Scope::try_from_exprs([Expr::sexpr(0..9, [], Scope::try_from_exprs([]).scope)])
+                Scope::try_from_exprs([Expr::sexpr([], 0..9, Scope::try_from_exprs([]).scope)])
                     .scope
             ),
             vec![Error::unexpected_end(8)
@@ -171,8 +171,8 @@ fn must_be_unique_same_expr() {
         (
             Some(
                 Scope::try_from_exprs([Expr::natural(
-                    16..19,
                     [Label::new(0..7, "label1"), Label::new(8..15, "label1")],
+                    16..19,
                     256u16
                 )])
                 .scope
@@ -189,8 +189,8 @@ fn must_be_unique_different_expr() {
         (
             Some(
                 Scope::try_from_exprs([
-                    Expr::natural(8..11, [Label::new(0..7, "label1")], 256u16),
-                    Expr::natural(20..23, [Label::new(12..19, "label1")], 256u16)
+                    Expr::natural([Label::new(0..7, "label1")], 8..11, 256u16),
+                    Expr::natural([Label::new(12..19, "label1")], 20..23, 256u16)
                 ])
                 .scope
             ),

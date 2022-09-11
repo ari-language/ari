@@ -12,7 +12,7 @@ fn symbol() {
     assert_eq!(
         parser().parse_recovery("symbol"),
         (
-            Some(Scope::try_from_exprs([Expr::symbol(0..6, [], "symbol")]).scope),
+            Some(Scope::try_from_exprs([Expr::symbol([], 0..6, "symbol")]).scope),
             vec![],
         )
     );
@@ -38,7 +38,7 @@ fn supports_builtin_sexpr_names() {
             (
                 parser().parse_recovery(symbol),
                 (
-                    Some(Scope::try_from_exprs([Expr::symbol(0..symbol.len(), [], symbol)]).scope),
+                    Some(Scope::try_from_exprs([Expr::symbol([], 0..symbol.len(), symbol)]).scope),
                     vec![],
                 ),
             )
@@ -53,7 +53,7 @@ fn supports_almost_all_of_unicode_with_exceptions() {
     assert_eq!(
         parser().parse_recovery("🙃"),
         (
-            Some(Scope::try_from_exprs([Expr::symbol(0..1, [], "🙃")]).scope),
+            Some(Scope::try_from_exprs([Expr::symbol([], 0..1, "🙃")]).scope),
             vec![]
         )
     );
@@ -64,7 +64,7 @@ fn cant_have_whitespace() {
     assert_eq!(
         parser().parse_recovery("symbol "),
         (
-            Some(Scope::try_from_exprs([Expr::symbol(0..6, [], "symbol")]).scope),
+            Some(Scope::try_from_exprs([Expr::symbol([], 0..6, "symbol")]).scope),
             vec![],
         )
     );
@@ -90,7 +90,7 @@ fn cant_have_left_paren() {
     assert_eq!(
         parser().parse_recovery("symbol("),
         (
-            Some(Scope::try_from_exprs([Expr::symbol(0..6, [], "symbol")]).scope),
+            Some(Scope::try_from_exprs([Expr::symbol([], 0..6, "symbol")]).scope),
             vec![Error::trailing_garbage(6..7)],
         )
     );
@@ -101,7 +101,7 @@ fn cant_have_right_paren() {
     assert_eq!(
         parser().parse_recovery("symbol)"),
         (
-            Some(Scope::try_from_exprs([Expr::symbol(0..6, [], "symbol")]).scope),
+            Some(Scope::try_from_exprs([Expr::symbol([], 0..6, "symbol")]).scope),
             vec![Error::trailing_garbage(6..7)],
         ),
     );
