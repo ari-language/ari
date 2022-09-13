@@ -4,8 +4,8 @@
   inputs = {
     flake-utils.url = "github:numtide/flake-utils";
 
-    flake-checker = {
-      url = "gitlab:kira-bruneau/flake-checker";
+    flake-linter = {
+      url = "gitlab:kira-bruneau/flake-linter";
       inputs.nixpkgs.follows = "nixpkgs";
     };
 
@@ -17,13 +17,13 @@
     };
   };
 
-  outputs = { self, flake-utils, flake-checker, nixpkgs, crane }:
+  outputs = { self, flake-utils, flake-linter, nixpkgs, crane }:
     let
       lib = nixpkgs.lib;
       systems = [ "x86_64-linux" ];
-      paths = flake-checker.lib.partitionToAttrs
-        flake-checker.lib.commonFlakePaths
-        (flake-checker.lib.walkFlake ./.);
+      paths = flake-linter.lib.partitionToAttrs
+        flake-linter.lib.commonFlakePaths
+        (flake-linter.lib.walkFlake ./.);
     in
     flake-utils.lib.eachSystem systems (system:
       let
@@ -33,7 +33,7 @@
 
         callPackage = pkgs.newScope pkgs;
 
-        checker = flake-checker.lib.makeFlakeChecker {
+        linter = flake-linter.lib.makeFlakeLinter {
           root = ./.;
           settings = {
             markdownlint = {
@@ -46,7 +46,6 @@
               };
             };
             nixpkgs-fmt.paths = paths.nix;
-            prettier.paths = paths.markdown;
             rustfmt.paths = paths.rust;
           };
 
@@ -61,19 +60,19 @@
             clippy
             coverage;
 
-          inherit (checker) check;
+          flake-linter = linter.check;
         } // packages;
 
         apps = {
-          inherit (checker) fix;
+          inherit (linter) fix;
         };
 
         devShells.default = packages.default.overrideAttrs (attrs: {
           doCheck = true;
           checkInputs = with pkgs; [
             cargo-tarpaulin
-            checker.packages
             clippy
+            linter.nativeBuildInputs
             nodePackages.markdown-link-check
           ];
         });

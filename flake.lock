@@ -22,27 +22,6 @@
         "type": "github"
       }
     },
-    "flake-checker": {
-      "inputs": {
-        "flake-utils": "flake-utils_2",
-        "nixpkgs": [
-          "nixpkgs"
-        ]
-      },
-      "locked": {
-        "lastModified": 1662344938,
-        "narHash": "sha256-XIi7FFzUhfiEnXW4sJg/TBQQy3gm0x4v1zqMpUZOops=",
-        "owner": "kira-bruneau",
-        "repo": "flake-checker",
-        "rev": "c6182624e0e4524426d3c3d0b603ef782d6848b2",
-        "type": "gitlab"
-      },
-      "original": {
-        "owner": "kira-bruneau",
-        "repo": "flake-checker",
-        "type": "gitlab"
-      }
-    },
     "flake-compat": {
       "flake": false,
       "locked": {
@@ -57,6 +36,27 @@
         "owner": "edolstra",
         "repo": "flake-compat",
         "type": "github"
+      }
+    },
+    "flake-linter": {
+      "inputs": {
+        "flake-utils": "flake-utils_2",
+        "nixpkgs": [
+          "nixpkgs"
+        ]
+      },
+      "locked": {
+        "lastModified": 1663096025,
+        "narHash": "sha256-SJZIGSBm6RW/ftkeOopFkrpMJSFBU6kYOLyGf35rAcw=",
+        "owner": "kira-bruneau",
+        "repo": "flake-linter",
+        "rev": "fe5dc4800f1774c4f4aad0be1cb7ca58436b0877",
+        "type": "gitlab"
+      },
+      "original": {
+        "owner": "kira-bruneau",
+        "repo": "flake-linter",
+        "type": "gitlab"
       }
     },
     "flake-utils": {
@@ -122,7 +122,7 @@
     "root": {
       "inputs": {
         "crane": "crane",
-        "flake-checker": "flake-checker",
+        "flake-linter": "flake-linter",
         "flake-utils": "flake-utils_3",
         "nixpkgs": "nixpkgs"
       }
