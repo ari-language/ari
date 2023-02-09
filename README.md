@@ -133,7 +133,7 @@ a*
 <td>
 
 ```lisp
-(^ "a" .)
+(^ "a" _)
 ```
 
 </td>
@@ -978,19 +978,18 @@ set with no types.
 ##### Top expression
 
 ```lisp
-:top-type .
+:top-type _
 ```
 
 Produces what is called a [top type
 `⊤`](https://en.wikipedia.org/wiki/Top_type), but it's not exactly a
-"type". It's a set containing every possible natural type
-(eg. [ℕ](https://en.wikipedia.org/wiki/Natural_number)).
+"type". It's a set containing every possible type.
 
-`.` is actually just syntax sugar for any type that directly
+`_` is actually just syntax sugar for any type that directly
 references itself:
 
 ```lisp
-:. .
+:_ _
 ```
 
 ##### Union expressions
@@ -1080,13 +1079,13 @@ Produces a set which takes the [relative
 complement](<https://en.wikipedia.org/wiki/Complement_(set_theory)#Relative_complement>)
 of `a` in `b`.
 
-Combined with the top type `.`, we derive a unary form of
+Combined with the top type `_`, we derive a unary form of
 relative-complement `!`:
 
 ```lisp
 :complement
 (=
-  (! x .)
+  (! x _)
   (! x)
 )
 ```
