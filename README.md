@@ -400,7 +400,7 @@ smaller numbers... and label them 🙂.
 > natural type, which allows for a level of precision not possible in
 > other type systems.
 
-### Value bindings and dependant types
+### Value bindings and dependent types
 
 In ari all types have an implicit binding with a corresponding runtime
 value. [Dereference expressions `@`](#dereference-expressions) can be
