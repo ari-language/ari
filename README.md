@@ -586,10 +586,6 @@ symbol
 Produce "symbol types", which are equivalent to whatever type is
 associated with `symbol` in the current scope.
 
-Symbols are implicitly labelled by their name when used once
-(unlabelled) within the same scope. This implicit label can be
-shadowed by explicit labels in the same scope.
-
 #### Value expressions
 
 In ari, all types are implicitly bound to a corresponding runtime
@@ -702,11 +698,6 @@ as utf-8, but this can be changed with text encoding macros:
 (utf-16 "text")
 (utf-32 "text")
 ```
-
-> **NOTE:** single-line text expressions are implicitly labelled by
-> their contents when used once (unlabelled) within the same
-> scope. This implicit label can be shadowed by explicit labels in the
-> same scope.
 
 ##### Codepoint symbol
 

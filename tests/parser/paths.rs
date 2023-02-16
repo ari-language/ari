@@ -60,65 +60,6 @@ fn applied_to_sexpr() {
 }
 
 #[test]
-fn applied_to_sexpr_symbol() {
-    assert_eq!(
-        parser().parse_recovery("(* r g b):r"),
-        (
-            Some(Scope::try_from_exprs([Expr::symbol([], 0..11, "r")]).scope),
-            vec![]
-        )
-    );
-}
-
-#[test]
-fn applied_to_sexpr_symbol_chained() {
-    assert_eq!(
-        parser().parse_recovery("(* x):x:a:b:c"),
-        (
-            Some(
-                Scope::try_from_exprs([Expr::path(
-                    [],
-                    0..13,
-                    [
-                        Label::new(3..4, "x"),
-                        Label::new(7..9, "a"),
-                        Label::new(9..11, "b"),
-                        Label::new(11..13, "c"),
-                    ],
-                )])
-                .scope
-            ),
-            vec![],
-        )
-    );
-}
-
-#[test]
-fn applied_to_sexpr_path_chained() {
-    assert_eq!(
-        parser().parse_recovery("(* x:y:z):z:a:b:c"),
-        (
-            Some(
-                Scope::try_from_exprs([Expr::path(
-                    [],
-                    0..17,
-                    [
-                        Label::new(3..4, "x"),
-                        Label::new(4..6, "y"),
-                        Label::new(6..8, "z"),
-                        Label::new(11..13, "a"),
-                        Label::new(13..15, "b"),
-                        Label::new(15..17, "c"),
-                    ],
-                )])
-                .scope
-            ),
-            vec![],
-        )
-    );
-}
-
-#[test]
 fn must_be_complete() {
     assert_eq!(
         parser().parse_recovery("symbol:"),

@@ -23,7 +23,6 @@ impl Scope {
         emit: &mut dyn FnMut(ScopeError),
     ) -> Self {
         let mut expr_from_label = HashMap::<Label, usize>::new();
-        let mut expr_from_implicit_label = HashMap::<Label, Option<usize>>::new();
 
         let exprs = iter
             .into_iter()
@@ -40,30 +39,9 @@ impl Scope {
                     }
                 }
 
-                // If there are no explicit labels, try to use the
-                // expression's implicit label
-                if expr_ref > 0 && expr.labels.is_empty() {
-                    if let Some(label) = expr.implicit_label() {
-                        if !expr_from_label.contains_key(&label) {
-                            if let Some(other_expr_ref) = expr_from_implicit_label.get_mut(&label) {
-                                *other_expr_ref = None;
-                            } else {
-                                expr_from_implicit_label.insert(label, Some(expr_ref));
-                            }
-                        }
-                    }
-                }
-
                 expr
             })
             .collect();
-
-        // Apply implicit labels that are unique within the scope
-        for (label, expr_ref) in expr_from_implicit_label {
-            if let Some(expr_ref) = expr_ref {
-                expr_from_label.entry(label).or_insert(expr_ref);
-            }
-        }
 
         Self {
             exprs, // TODO: Try to resolve all the symbols we can in this scope
@@ -195,22 +173,6 @@ impl Expr {
             .unwrap_or(self.span.start);
 
         start..self.span.end
-    }
-
-    fn implicit_label(&self) -> Option<Label> {
-        match &self.variant {
-            ExprVariant::Symbol(symbol) => Some(match symbol {
-                Symbol::Unresolved(symbol) => Label {
-                    span: self.span.clone(),
-                    symbol: symbol.clone(),
-                },
-                Symbol::UnresolvedPath(path) => {
-                    path.last().expect("at least one symbol in path").clone()
-                }
-                Symbol::Resolved(_) => unreachable!(),
-            }),
-            ExprVariant::Natural(_) | ExprVariant::SExpr(_) => None,
-        }
     }
 }
 
