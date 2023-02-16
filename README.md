@@ -643,44 +643,35 @@ Produce a nested type contained within another type.
 #### Extended symbol expressions
 
 ```ari
-'symbol'
-'''symbol'''
-...
+'(symbol)'
 ```
 
-Produce symbols that can contain special characters.
+Produce symbols that can include non-whitespace special characters.
 
-If you want to use the prefix/suffix quotes in the expression, you can
-always add another 2 quotes to the prefix & suffix. The number of
-quotes are required to be odd, so you can embed quoted symbols as a
-special case:
+To encode quotes in this expression, double them up:
 
 ```ari
-''symbol''
+'''quoted'''
 ```
 
-When used in label expressions, the first non-empty line will be
-interpreted as the name, and the following lines will be interpreted
-as the description:
+> **NOTE:** To get a better understating of how this works, these
+> expressions only terminate after an odd sequence of quotes. Then all
+> terminating quotes (except for the last) are interpreted as part of
+> the symbol.
+
+Any characters following whitespace will be treated as documentation:
 
 ```lisp
-:'''
-  pixel
-  A 24bit RGB pixel
-'''
+:'pixel A 24bit RGB pixel'
 (* :r 256 :g 256 :b 256)
 
-pixel
+'pixel Here we're referencing pixel'
 ```
-
-> **NOTE:** This means its impossible to define a multiline symbol
 
 #### Unicode text expressions
 
 ```ari
-"text"
-"""text"""
-...
+"()"
 ```
 
 A convenient notation for defining text-based grammars, which is
@@ -688,18 +679,19 @@ actually just syntax sugar for runtime [assertion
 expressions](#assertion-expressions) that assert for
 [Unicode](https://en.wikipedia.org/wiki/Unicode) text.
 
-If you want to use the prefix/suffix quotes in the expression, you can
-always add another 2 quotes to the prefix & suffix. The number of
-quotes are required to be odd, so you can embed quoted text as a
-special case:
+To encode quotes in this expression, double them up:
 
 ```ari
-""text""
+"{
+  ""abc"": 123
+}"
 ```
 
-Without an encoding context, text is interpreted as
-[UTF-8](https://en.wikipedia.org/wiki/UTF-8), but can be interpreted
-with a different encoding with text encoding macros:
+> **NOTE** This follows the same behaviour as [extended symbol
+> expressions](extended-symbol-expressions)
+
+Text not bound to any particular encoding context will be interpreted
+as utf-8, but this can be changed with text encoding macros:
 
 ```lisp
 (=
