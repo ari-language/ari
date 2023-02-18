@@ -87,6 +87,7 @@ impl From<BigUint> for Natural {
 
 #[cfg(test)]
 mod tests {
+    use pretty_assertions::assert_eq;
     use std::str::FromStr;
 
     use super::*;
