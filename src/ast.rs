@@ -10,12 +10,15 @@ pub struct Ast {
 }
 
 impl Ast {
-    pub fn try_from_exprs(iter: impl IntoIterator<Item = Expr>) -> AstResult {
+    pub fn try_from_exprs(
+        iter: impl IntoIterator<Item = Expr>,
+    ) -> Result<Ast, (Box<[AstError]>, Ast)> {
         let mut errors = Vec::new();
         let ast = Self::try_from_exprs_with_emit(iter, &mut |err| errors.push(err));
-        AstResult {
-            ast,
-            errors: errors.into_boxed_slice(),
+        if errors.is_empty() {
+            Ok(ast)
+        } else {
+            Err((errors.into_boxed_slice(), ast))
         }
     }
 
@@ -66,13 +69,6 @@ impl PartialEq for Ast {
     fn eq(&self, other: &Self) -> bool {
         self.exprs.eq(&other.exprs)
     }
-}
-
-#[derive(Debug, Clone, PartialEq, Eq)]
-#[must_use = "this `AstResult` may have errors, which should be handled"]
-pub struct AstResult {
-    pub ast: Ast,
-    pub errors: Box<[AstError]>,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]

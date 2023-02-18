@@ -18,7 +18,7 @@ fn applied_to_symbol() {
                     0..11,
                     [Label::new(0..6, "symbol"), Label::new(6..11, "path")],
                 )])
-                .ast
+                .unwrap()
             ),
             vec![],
         )
@@ -41,7 +41,7 @@ fn applied_to_symbol_chained() {
                         Label::new(10..12, "z"),
                     ],
                 )])
-                .ast
+                .unwrap()
             ),
             vec![],
         )
@@ -53,7 +53,7 @@ fn applied_to_sexpr() {
     assert_eq!(
         parser().parse_recovery("(* :r 256 :g 256 :b 256):r"),
         (
-            Some(Ast::try_from_exprs([Expr::natural([], 0..26, 256u16)]).ast),
+            Some(Ast::try_from_exprs([Expr::natural([], 0..26, 256u16)]).unwrap()),
             vec![],
         )
     );
@@ -64,7 +64,7 @@ fn must_be_complete() {
     assert_eq!(
         parser().parse_recovery("symbol:"),
         (
-            Some(Ast::try_from_exprs([]).ast),
+            Some(Ast::try_from_exprs([]).unwrap()),
             vec![Error::unexpected_end(7)
                 .with_label(ErrorLabel::Symbol)
                 .with_label(ErrorLabel::Label)
@@ -89,7 +89,7 @@ fn multiple_must_be_chained() {
                         Label::new(8..10, "y"),
                     ],
                 )])
-                .ast
+                .unwrap()
             ),
             vec![Error::unexpected_end(13).with_label(ErrorLabel::LabelsWithExpr)],
         )
@@ -101,7 +101,7 @@ fn cant_have_left_paren() {
     assert_eq!(
         parser().parse_recovery("symbol:("),
         (
-            Some(Ast::try_from_exprs([]).ast),
+            Some(Ast::try_from_exprs([]).unwrap()),
             vec![Error::unexpected_char(7..8, '(')
                 .with_label(ErrorLabel::Symbol)
                 .with_label(ErrorLabel::Label)
@@ -116,7 +116,7 @@ fn cant_have_right_paren() {
     assert_eq!(
         parser().parse_recovery("symbol:)"),
         (
-            Some(Ast::try_from_exprs([]).ast),
+            Some(Ast::try_from_exprs([]).unwrap()),
             vec![Error::unexpected_char(7..8, ')')
                 .with_label(ErrorLabel::Symbol)
                 .with_label(ErrorLabel::Label)
@@ -131,7 +131,7 @@ fn cant_apply_to_natural() {
     assert_eq!(
         parser().parse_recovery("256:x"),
         (
-            Some(Ast::try_from_exprs([]).ast),
+            Some(Ast::try_from_exprs([]).unwrap()),
             vec![Error::invalid_path(3..5).with_label(ErrorLabel::ExprWithPath)],
         )
     );
@@ -142,7 +142,7 @@ fn cant_apply_to_sexpr_natural() {
     assert_eq!(
         parser().parse_recovery("(* :x 256):x:y:b"),
         (
-            Some(Ast::try_from_exprs([]).ast),
+            Some(Ast::try_from_exprs([]).unwrap()),
             vec![Error::invalid_path(12..16).with_label(ErrorLabel::ExprWithPath)],
         )
     );
@@ -153,7 +153,7 @@ fn cant_apply_to_sexpr_missing_path_label() {
     assert_eq!(
         parser().parse_recovery("(* :x (* :y (* :z 256))):x:y:b"),
         (
-            Some(Ast::try_from_exprs([]).ast),
+            Some(Ast::try_from_exprs([]).unwrap()),
             vec![Error::invalid_path(28..30).with_label(ErrorLabel::ExprWithPath)],
         )
     );

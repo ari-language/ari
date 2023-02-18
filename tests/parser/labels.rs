@@ -1,7 +1,7 @@
 use pretty_assertions::assert_eq;
 
 use ari::{
-    ast::{Ast, Expr, Label},
+    ast::{Ast, AstError, Expr, Label},
     parser::{parser, Error, ErrorLabel},
 };
 
@@ -14,7 +14,7 @@ fn single() {
         (
             Some(
                 Ast::try_from_exprs([Expr::natural([Label::new(0..6, "label")], 7..10, 256u16)])
-                    .ast
+                    .unwrap()
             ),
             vec![],
         )
@@ -32,7 +32,7 @@ fn multiple() {
                     16..19,
                     256u16,
                 )])
-                .ast
+                .unwrap()
             ),
             vec![],
         )
@@ -54,7 +54,7 @@ fn multiple_chained() {
                     7..10,
                     256u16,
                 )])
-                .ast
+                .unwrap()
             ),
             vec![],
         )
@@ -66,7 +66,7 @@ fn names_cant_have_colon() {
     assert_eq!(
         parser().parse_recovery(":: 256"),
         (
-            Some(Ast::try_from_exprs([Expr::natural([], 3..6, 256u16)]).ast),
+            Some(Ast::try_from_exprs([Expr::natural([], 3..6, 256u16)]).unwrap()),
             vec![Error::unexpected_char(1..2, ':')
                 .with_label(ErrorLabel::Symbol)
                 .with_label(ErrorLabel::Label)
@@ -80,7 +80,7 @@ fn names_cant_have_left_paren() {
     assert_eq!(
         parser().parse_recovery(":( 256"),
         (
-            Some(Ast::try_from_exprs([Expr::natural([], 3..6, 256u16)]).ast),
+            Some(Ast::try_from_exprs([Expr::natural([], 3..6, 256u16)]).unwrap()),
             vec![Error::unexpected_char(1..2, '(')
                 .with_label(ErrorLabel::Symbol)
                 .with_label(ErrorLabel::Label)
@@ -94,7 +94,7 @@ fn names_cant_have_right_paren() {
     assert_eq!(
         parser().parse_recovery(":) 256"),
         (
-            Some(Ast::try_from_exprs([Expr::natural([], 3..6, 256u16)]).ast),
+            Some(Ast::try_from_exprs([Expr::natural([], 3..6, 256u16)]).unwrap()),
             vec![Error::unexpected_char(1..2, ')')
                 .with_label(ErrorLabel::Symbol)
                 .with_label(ErrorLabel::Label)
@@ -108,7 +108,7 @@ fn must_have_name() {
     assert_eq!(
         parser().parse_recovery(": "),
         (
-            Some(Ast::try_from_exprs([]).ast),
+            Some(Ast::try_from_exprs([]).unwrap()),
             vec![Error::unexpected_char(1..2, ' ')
                 .with_label(ErrorLabel::Symbol)
                 .with_label(ErrorLabel::Label)
@@ -122,7 +122,10 @@ fn must_have_name_in_sexpr() {
     assert_eq!(
         parser().parse_recovery("(: )"),
         (
-            Some(Ast::try_from_exprs([Expr::sexpr([], 0..4, Ast::try_from_exprs([]).ast)]).ast),
+            Some(
+                Ast::try_from_exprs([Expr::sexpr([], 0..4, Ast::try_from_exprs([]).unwrap())])
+                    .unwrap()
+            ),
             vec![Error::unexpected_char(2..3, ' ')
                 .with_label(ErrorLabel::Symbol)
                 .with_label(ErrorLabel::Label)
@@ -138,7 +141,7 @@ fn must_have_associated_expr() {
     assert_eq!(
         parser().parse_recovery(":label "),
         (
-            Some(Ast::try_from_exprs([]).ast),
+            Some(Ast::try_from_exprs([]).unwrap()),
             vec![Error::unexpected_end(7).with_label(ErrorLabel::LabelsWithExpr)]
         )
     );
@@ -149,7 +152,10 @@ fn must_have_associated_expr_in_sexpr() {
     assert_eq!(
         parser().parse_recovery("(:label )"),
         (
-            Some(Ast::try_from_exprs([Expr::sexpr([], 0..9, Ast::try_from_exprs([]).ast)]).ast),
+            Some(
+                Ast::try_from_exprs([Expr::sexpr([], 0..9, Ast::try_from_exprs([]).unwrap())])
+                    .unwrap()
+            ),
             vec![Error::unexpected_end(8)
                 .with_label(ErrorLabel::LabelsWithExpr)
                 .with_label(ErrorLabel::SExpr)
@@ -160,35 +166,51 @@ fn must_have_associated_expr_in_sexpr() {
 
 #[test]
 fn must_be_unique_same_expr() {
+    let (err, ast) = Ast::try_from_exprs([Expr::natural(
+        [Label::new(0..7, "label1"), Label::new(8..15, "label1")],
+        16..19,
+        256u16,
+    )])
+    .unwrap_err();
+
+    let (start_span, end_span) = match err.as_ref() {
+        [AstError::DuplicateLabel(start_span, end_span)] => {
+            assert_eq!((start_span, end_span), (&(8..15), &(0..7)));
+            (start_span.clone(), end_span.clone())
+        }
+        err => panic!("unexpected error: {:?}", err),
+    };
+
     assert_eq!(
         parser().parse_recovery(":label1 :label1 256"),
         (
-            Some(
-                Ast::try_from_exprs([Expr::natural(
-                    [Label::new(0..7, "label1"), Label::new(8..15, "label1")],
-                    16..19,
-                    256u16
-                )])
-                .ast
-            ),
-            vec![Error::duplicate_label(8..15, 0..7)],
+            Some(ast),
+            vec![Error::duplicate_label(start_span, end_span)]
         )
     );
 }
 
 #[test]
 fn must_be_unique_different_expr() {
+    let (err, ast) = Ast::try_from_exprs([
+        Expr::natural([Label::new(0..7, "label1")], 8..11, 256u16),
+        Expr::natural([Label::new(12..19, "label1")], 20..23, 256u16),
+    ])
+    .unwrap_err();
+
+    let (start_span, end_span) = match err.as_ref() {
+        [AstError::DuplicateLabel(start_span, end_span)] => {
+            assert_eq!((start_span, end_span), (&(12..19), &(0..7)));
+            (start_span.clone(), end_span.clone())
+        }
+        err => panic!("unexpected error: {:?}", err),
+    };
+
     assert_eq!(
         parser().parse_recovery(":label1 256 :label1 256"),
         (
-            Some(
-                Ast::try_from_exprs([
-                    Expr::natural([Label::new(0..7, "label1")], 8..11, 256u16),
-                    Expr::natural([Label::new(12..19, "label1")], 20..23, 256u16)
-                ])
-                .ast
-            ),
-            vec![Error::duplicate_label(12..19, 0..7)],
+            Some(ast),
+            vec![Error::duplicate_label(start_span, end_span)],
         )
     );
 }

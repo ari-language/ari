@@ -22,9 +22,9 @@ fn sexpr() {
                         Expr::natural([Label::new(10..12, "g")], 13..16, 256u16),
                         Expr::natural([Label::new(17..19, "b")], 20..23, 256u16),
                     ])
-                    .ast,
+                    .unwrap(),
                 )])
-                .ast
+                .unwrap()
             ),
             vec![],
         )
@@ -36,7 +36,10 @@ fn empty() {
     assert_eq!(
         parser().parse_recovery("()"),
         (
-            Some(Ast::try_from_exprs([Expr::sexpr([], 0..2, Ast::try_from_exprs([]).ast)]).ast),
+            Some(
+                Ast::try_from_exprs([Expr::sexpr([], 0..2, Ast::try_from_exprs([]).unwrap())])
+                    .unwrap()
+            ),
             vec![]
         )
     );
@@ -47,7 +50,10 @@ fn empty_with_padding() {
     assert_eq!(
         parser().parse_recovery("( )"),
         (
-            Some(Ast::try_from_exprs([Expr::sexpr([], 0..3, Ast::try_from_exprs([]).ast)]).ast),
+            Some(
+                Ast::try_from_exprs([Expr::sexpr([], 0..3, Ast::try_from_exprs([]).unwrap())])
+                    .unwrap()
+            ),
             vec![]
         )
     );
@@ -58,7 +64,10 @@ fn cant_have_left_paren() {
     assert_eq!(
         parser().parse_recovery("("),
         (
-            Some(Ast::try_from_exprs([Expr::sexpr([], 0..1, Ast::try_from_exprs([]).ast)]).ast),
+            Some(
+                Ast::try_from_exprs([Expr::sexpr([], 0..1, Ast::try_from_exprs([]).unwrap())])
+                    .unwrap()
+            ),
             vec![Error::unexpected_end(1)
                 .with_label(ErrorLabel::SExpr)
                 .with_label(ErrorLabel::ExprWithPath)],
@@ -71,7 +80,7 @@ fn cant_have_right_paren() {
     assert_eq!(
         parser().parse_recovery(")"),
         (
-            Some(Ast::try_from_exprs([]).ast),
+            Some(Ast::try_from_exprs([]).unwrap()),
             vec![Error::trailing_garbage(0..1)],
         )
     );
