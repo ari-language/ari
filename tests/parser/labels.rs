@@ -1,7 +1,7 @@
 use pretty_assertions::assert_eq;
 
 use ari::{
-    ast::{Expr, Label, Scope},
+    ast::{Ast, Expr, Label},
     parser::{parser, Error, ErrorLabel},
 };
 
@@ -13,8 +13,8 @@ fn single() {
         parser().parse_recovery(":label 256"),
         (
             Some(
-                Scope::try_from_exprs([Expr::natural([Label::new(0..6, "label")], 7..10, 256u16)])
-                    .scope
+                Ast::try_from_exprs([Expr::natural([Label::new(0..6, "label")], 7..10, 256u16)])
+                    .ast
             ),
             vec![],
         )
@@ -27,12 +27,12 @@ fn multiple() {
         parser().parse_recovery(":label1 :label2 256"),
         (
             Some(
-                Scope::try_from_exprs([Expr::natural(
+                Ast::try_from_exprs([Expr::natural(
                     [Label::new(0..7, "label1"), Label::new(8..15, "label2")],
                     16..19,
                     256u16,
                 )])
-                .scope
+                .ast
             ),
             vec![],
         )
@@ -45,7 +45,7 @@ fn multiple_chained() {
         parser().parse_recovery(":x:y:z 256"),
         (
             Some(
-                Scope::try_from_exprs([Expr::natural(
+                Ast::try_from_exprs([Expr::natural(
                     [
                         Label::new(0..2, "x"),
                         Label::new(2..4, "y"),
@@ -54,7 +54,7 @@ fn multiple_chained() {
                     7..10,
                     256u16,
                 )])
-                .scope
+                .ast
             ),
             vec![],
         )
@@ -66,7 +66,7 @@ fn names_cant_have_colon() {
     assert_eq!(
         parser().parse_recovery(":: 256"),
         (
-            Some(Scope::try_from_exprs([Expr::natural([], 3..6, 256u16)]).scope),
+            Some(Ast::try_from_exprs([Expr::natural([], 3..6, 256u16)]).ast),
             vec![Error::unexpected_char(1..2, ':')
                 .with_label(ErrorLabel::Symbol)
                 .with_label(ErrorLabel::Label)
@@ -80,7 +80,7 @@ fn names_cant_have_left_paren() {
     assert_eq!(
         parser().parse_recovery(":( 256"),
         (
-            Some(Scope::try_from_exprs([Expr::natural([], 3..6, 256u16)]).scope),
+            Some(Ast::try_from_exprs([Expr::natural([], 3..6, 256u16)]).ast),
             vec![Error::unexpected_char(1..2, '(')
                 .with_label(ErrorLabel::Symbol)
                 .with_label(ErrorLabel::Label)
@@ -94,7 +94,7 @@ fn names_cant_have_right_paren() {
     assert_eq!(
         parser().parse_recovery(":) 256"),
         (
-            Some(Scope::try_from_exprs([Expr::natural([], 3..6, 256u16)]).scope),
+            Some(Ast::try_from_exprs([Expr::natural([], 3..6, 256u16)]).ast),
             vec![Error::unexpected_char(1..2, ')')
                 .with_label(ErrorLabel::Symbol)
                 .with_label(ErrorLabel::Label)
@@ -108,7 +108,7 @@ fn must_have_name() {
     assert_eq!(
         parser().parse_recovery(": "),
         (
-            Some(Scope::try_from_exprs([]).scope),
+            Some(Ast::try_from_exprs([]).ast),
             vec![Error::unexpected_char(1..2, ' ')
                 .with_label(ErrorLabel::Symbol)
                 .with_label(ErrorLabel::Label)
@@ -122,10 +122,7 @@ fn must_have_name_in_sexpr() {
     assert_eq!(
         parser().parse_recovery("(: )"),
         (
-            Some(
-                Scope::try_from_exprs([Expr::sexpr([], 0..4, Scope::try_from_exprs([]).scope)])
-                    .scope
-            ),
+            Some(Ast::try_from_exprs([Expr::sexpr([], 0..4, Ast::try_from_exprs([]).ast)]).ast),
             vec![Error::unexpected_char(2..3, ' ')
                 .with_label(ErrorLabel::Symbol)
                 .with_label(ErrorLabel::Label)
@@ -141,7 +138,7 @@ fn must_have_associated_expr() {
     assert_eq!(
         parser().parse_recovery(":label "),
         (
-            Some(Scope::try_from_exprs([]).scope),
+            Some(Ast::try_from_exprs([]).ast),
             vec![Error::unexpected_end(7).with_label(ErrorLabel::LabelsWithExpr)]
         )
     );
@@ -152,10 +149,7 @@ fn must_have_associated_expr_in_sexpr() {
     assert_eq!(
         parser().parse_recovery("(:label )"),
         (
-            Some(
-                Scope::try_from_exprs([Expr::sexpr([], 0..9, Scope::try_from_exprs([]).scope)])
-                    .scope
-            ),
+            Some(Ast::try_from_exprs([Expr::sexpr([], 0..9, Ast::try_from_exprs([]).ast)]).ast),
             vec![Error::unexpected_end(8)
                 .with_label(ErrorLabel::LabelsWithExpr)
                 .with_label(ErrorLabel::SExpr)
@@ -170,12 +164,12 @@ fn must_be_unique_same_expr() {
         parser().parse_recovery(":label1 :label1 256"),
         (
             Some(
-                Scope::try_from_exprs([Expr::natural(
+                Ast::try_from_exprs([Expr::natural(
                     [Label::new(0..7, "label1"), Label::new(8..15, "label1")],
                     16..19,
                     256u16
                 )])
-                .scope
+                .ast
             ),
             vec![Error::duplicate_label(8..15, 0..7)],
         )
@@ -188,11 +182,11 @@ fn must_be_unique_different_expr() {
         parser().parse_recovery(":label1 256 :label1 256"),
         (
             Some(
-                Scope::try_from_exprs([
+                Ast::try_from_exprs([
                     Expr::natural([Label::new(0..7, "label1")], 8..11, 256u16),
                     Expr::natural([Label::new(12..19, "label1")], 20..23, 256u16)
                 ])
-                .scope
+                .ast
             ),
             vec![Error::duplicate_label(12..19, 0..7)],
         )

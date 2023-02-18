@@ -7,16 +7,16 @@ use num_bigint::BigUint;
 use num_traits::Num;
 
 use crate::{
-    ast::{Expr, ExprVariant, Label, Path, Scope, ScopeError, Symbol},
+    ast::{Ast, AstError, Expr, ExprVariant, Label, Path, Symbol},
     natural::Natural,
 };
 
 // TODO: Ref, Deref, extended labels & text expressions
-pub fn parser() -> impl Parser<char, Scope, Error = Error> {
+pub fn parser() -> impl Parser<char, Ast, Error = Error> {
     let expr = recursive(|expr| {
         labels_with_expr(expr_with_path(choice((
             sexpr(expr)
-                .map_with_span(|scope, span| Expr::<()>::variant(span, ExprVariant::SExpr(scope))),
+                .map_with_span(|ast, span| Expr::<()>::variant(span, ExprVariant::SExpr(ast))),
             natural().map_with_span(|natural, span| {
                 Expr::<()>::variant(span, ExprVariant::Natural(natural))
             }),
@@ -35,7 +35,7 @@ pub fn parser() -> impl Parser<char, Scope, Error = Error> {
             }
         });
 
-    scope(expr).then_ignore(trailing_garbage)
+    ast(expr).then_ignore(trailing_garbage)
 }
 
 fn labels_with_expr(
@@ -94,8 +94,8 @@ fn path() -> impl Parser<char, Result<Box<Path>, ()>, Error = Error> + Clone {
 
 fn sexpr(
     expr: impl Parser<char, Result<Expr, ()>, Error = Error> + Clone,
-) -> impl Parser<char, Scope, Error = Error> + Clone {
-    scope(expr)
+) -> impl Parser<char, Ast, Error = Error> + Clone {
+    ast(expr)
         .delimited_by(
             just('('),
             just(')')
@@ -106,15 +106,15 @@ fn sexpr(
         .labelled(ErrorLabel::SExpr)
 }
 
-fn scope(
+fn ast(
     expr: impl Parser<char, Result<Expr, ()>, Error = Error> + Clone,
-) -> impl Parser<char, Scope, Error = Error> + Clone {
+) -> impl Parser<char, Ast, Error = Error> + Clone {
     expr.separated_by(required_whitespace())
         .flatten()
         .validate(|exprs, _span, emit| {
-            Scope::try_from_exprs_with_emit(exprs, &mut |err| {
+            Ast::try_from_exprs_with_emit(exprs, &mut |err| {
                 emit(match err {
-                    ScopeError::DuplicateLabel(span, other_span) => {
+                    AstError::DuplicateLabel(span, other_span) => {
                         Error::duplicate_label(span, other_span)
                     }
                 })

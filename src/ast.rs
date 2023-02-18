@@ -2,25 +2,26 @@ use std::{collections::HashMap, hash::Hash, ops::Range, vec::IntoIter};
 
 use crate::natural::Natural;
 
+/// Ari's "abstract syntax tree"
 #[derive(Debug, Clone, Eq, Default)]
-pub struct Scope {
+pub struct Ast {
     exprs: Box<[Expr]>,
     expr_from_label: HashMap<Label, usize>,
 }
 
-impl Scope {
-    pub fn try_from_exprs(iter: impl IntoIterator<Item = Expr>) -> ScopeResult {
+impl Ast {
+    pub fn try_from_exprs(iter: impl IntoIterator<Item = Expr>) -> AstResult {
         let mut errors = Vec::new();
-        let scope = Self::try_from_exprs_with_emit(iter, &mut |err| errors.push(err));
-        ScopeResult {
-            scope,
+        let ast = Self::try_from_exprs_with_emit(iter, &mut |err| errors.push(err));
+        AstResult {
+            ast,
             errors: errors.into_boxed_slice(),
         }
     }
 
     pub fn try_from_exprs_with_emit(
         iter: impl IntoIterator<Item = Expr>,
-        emit: &mut dyn FnMut(ScopeError),
+        emit: &mut dyn FnMut(AstError),
     ) -> Self {
         let mut expr_from_label = HashMap::<Label, usize>::new();
 
@@ -30,7 +31,7 @@ impl Scope {
             .map(|(expr_ref, expr)| {
                 for label in expr.labels.iter() {
                     if let Some((other_label, _)) = expr_from_label.get_key_value(label) {
-                        emit(ScopeError::DuplicateLabel(
+                        emit(AstError::DuplicateLabel(
                             label.span.clone(),
                             other_label.span.clone(),
                         ));
@@ -50,7 +51,7 @@ impl Scope {
     }
 }
 
-impl IntoIterator for Scope {
+impl IntoIterator for Ast {
     type Item = Expr;
 
     type IntoIter = IntoIter<Self::Item>;
@@ -61,21 +62,21 @@ impl IntoIterator for Scope {
     }
 }
 
-impl PartialEq for Scope {
+impl PartialEq for Ast {
     fn eq(&self, other: &Self) -> bool {
         self.exprs.eq(&other.exprs)
     }
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
-#[must_use = "this `ScopeResult` may have errors, which should be handled"]
-pub struct ScopeResult {
-    pub scope: Scope,
-    pub errors: Box<[ScopeError]>,
+#[must_use = "this `AstResult` may have errors, which should be handled"]
+pub struct AstResult {
+    pub ast: Ast,
+    pub errors: Box<[AstError]>,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
-pub enum ScopeError {
+pub enum AstError {
     DuplicateLabel(Range<usize>, Range<usize>),
 }
 
@@ -157,12 +158,8 @@ impl Expr {
         )
     }
 
-    pub fn sexpr(
-        labels: impl Into<Box<[Label]>>,
-        span: Range<usize>,
-        scope: impl Into<Scope>,
-    ) -> Self {
-        Self::variant(labels, span, ExprVariant::SExpr(scope.into()))
+    pub fn sexpr(labels: impl Into<Box<[Label]>>, span: Range<usize>, ast: impl Into<Ast>) -> Self {
+        Self::variant(labels, span, ExprVariant::SExpr(ast.into()))
     }
 
     pub fn span_with_labels(&self) -> Range<usize> {
@@ -199,10 +196,9 @@ impl<Labels> Expr<Labels> {
                             Symbol::Resolved(_) => unreachable!(),
                         }))
                     }
-                    ExprVariant::SExpr(scope) => match scope.expr_from_label.get(label).copied() {
+                    ExprVariant::SExpr(ast) => match ast.expr_from_label.get(label).copied() {
                         Some(index) => {
-                            scope
-                                .into_iter()
+                            ast.into_iter()
                                 .nth(index)
                                 .unwrap()
                                 .with_path_rec(path, depth + 1)?
@@ -254,7 +250,7 @@ impl Label {
 pub enum ExprVariant {
     Natural(Natural),
     Symbol(Symbol),
-    SExpr(Scope),
+    SExpr(Ast),
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
