@@ -27,9 +27,6 @@
     let
       lib = nixpkgs.lib;
       systems = [ "x86_64-linux" ];
-      paths = flake-linter.lib.partitionToAttrs
-        flake-linter.lib.commonFlakePaths
-        (flake-linter.lib.walkFlake ./.);
     in
     flake-utils.lib.eachSystem systems (system:
       let
@@ -39,23 +36,29 @@
 
         callPackage = pkgs.newScope pkgs;
 
-        linter = flake-linter.lib.makeFlakeLinter {
+        flake-linter-lib = flake-linter.lib.${system};
+
+        paths = flake-linter-lib.partitionToAttrs
+          flake-linter-lib.commonPaths
+          (flake-linter-lib.walkFlake ./.);
+
+        linter = flake-linter-lib.makeFlakeLinter {
           root = ./.;
+
           settings = {
             markdownlint = {
               paths = paths.markdown;
-              extraSettings = {
+              settings = {
                 default = true;
                 MD033 = {
                   allowed_elements = [ "img" "table" "tr" "th" "td" ];
                 };
               };
             };
+
             nixpkgs-fmt.paths = paths.nix;
             rustfmt.paths = paths.rust;
           };
-
-          inherit pkgs;
         };
       in
       rec {
