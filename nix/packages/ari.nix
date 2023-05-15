@@ -3,36 +3,15 @@
 }:
 
 let
-  root = ../..;
-
-  src = builtins.path {
-    path = root;
-    name = "source";
-    filter = absolutePath: type:
-      let
-        path = lib.removePrefix "${builtins.toString root}/" absolutePath;
-      in
-      lib.hasPrefix "src" path || lib.hasPrefix "tests" path ||
-      type != "directory" && (path == "Cargo.toml" || path == "Cargo.lock");
-  };
-
-  buildSrc = builtins.path {
-    path = src;
-    name = "build-source";
-    filter = path: type:
-      !(lib.hasPrefix "${builtins.toString src}/tests" path);
-  };
-
+  src = craneLib.cleanCargoSource (craneLib.path ../..);
   cargoArtifacts = craneLib.buildDepsOnly {
-    src = buildSrc;
+    inherit src;
   };
 in
 craneLib.buildPackage {
   pname = "ari";
   version = "0.1";
-
-  src = buildSrc;
-  inherit cargoArtifacts;
+  inherit src cargoArtifacts;
 
   doCheck = false;
 
