@@ -1,6 +1,6 @@
 # ari
 
-<img src="ari.png" width="128px" height="128px">
+<img src="ari.svg" width="128px" height="128px">
 
 A type-centred [purely functional
 programming](https://en.wikipedia.org/wiki/Purely_functional_programming)
