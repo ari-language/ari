@@ -76,37 +76,10 @@ pub enum AstError {
     DuplicateLabel(Range<usize>, Range<usize>),
 }
 
-#[derive(Debug, Clone, Eq)]
-pub struct Expr<Labels = Box<[Label]>> {
-    pub labels: Labels,
-    pub span: Range<usize>,
-    pub variant: ExprVariant,
-}
-
-impl Expr<()> {
-    pub(crate) fn variant(span: Range<usize>, variant: ExprVariant) -> Self {
-        Self {
-            labels: (),
-            span,
-            variant,
-        }
-    }
-
-    pub(crate) fn with_path(self, path: Box<Path>) -> Result<Self, Range<usize>> {
-        self.with_path_rec(path, 0).map_err(|(path, depth)| {
-            let start = path.get(depth).unwrap().span.start;
-            let end = path.last().unwrap().span.end;
-            start..end
-        })
-    }
-
-    pub(crate) fn with_labels(self, labels: Box<[Label]>) -> Expr {
-        Expr {
-            labels,
-            span: self.span,
-            variant: self.variant,
-        }
-    }
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct Expr {
+    pub labels: Box<[Label]>,
+    pub base: BaseExpr,
 }
 
 impl Expr {
@@ -117,8 +90,7 @@ impl Expr {
     ) -> Self {
         Self {
             labels: labels.into(),
-            span,
-            variant,
+            base: BaseExpr::variant(span, variant),
         }
     }
 
@@ -158,22 +130,45 @@ impl Expr {
         Self::variant(labels, span, ExprVariant::SExpr(ast.into()))
     }
 
-    pub fn span_with_labels(&self) -> Range<usize> {
+    pub fn span(&self) -> Range<usize> {
         let start = self
             .labels
             .first()
             .map(|Label { span, .. }| span.start)
-            .unwrap_or(self.span.start);
+            .unwrap_or(self.base.span.start);
 
-        start..self.span.end
+        start..self.base.span.end
     }
 }
 
-impl<Labels> Expr<Labels> {
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct BaseExpr {
+    pub span: Range<usize>,
+    pub variant: ExprVariant,
+}
+
+impl BaseExpr {
+    pub(crate) fn variant(span: Range<usize>, variant: ExprVariant) -> Self {
+        Self { span, variant }
+    }
+
+    pub(crate) fn with_path(self, path: Box<Path>) -> Result<Self, Range<usize>> {
+        self.with_path_rec(path, 0).map_err(|(path, depth)| {
+            let start = path.get(depth).unwrap().span.start;
+            let end = path.last().unwrap().span.end;
+            start..end
+        })
+    }
+
+    pub(crate) fn with_labels(self, labels: Box<[Label]>) -> Expr {
+        Expr { labels, base: self }
+    }
+}
+
+impl BaseExpr {
     fn with_path_rec(self, path: Box<Path>, depth: usize) -> Result<Self, (Box<Path>, usize)> {
         Ok(match path.get(depth) {
             Some(label) => Self {
-                labels: self.labels,
                 span: self.span.start..path.last().unwrap().span.end,
                 variant: match self.variant {
                     ExprVariant::Natural(_) => return Err((path, depth)),
@@ -197,6 +192,7 @@ impl<Labels> Expr<Labels> {
                             ast.into_iter()
                                 .nth(index)
                                 .unwrap()
+                                .base
                                 .with_path_rec(path, depth + 1)?
                                 .variant
                         }
@@ -206,12 +202,6 @@ impl<Labels> Expr<Labels> {
             },
             None => self,
         })
-    }
-}
-
-impl<Labels: PartialEq> PartialEq for Expr<Labels> {
-    fn eq(&self, other: &Self) -> bool {
-        self.labels.eq(&other.labels) && self.variant.eq(&other.variant)
     }
 }
 

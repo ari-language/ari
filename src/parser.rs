@@ -7,7 +7,7 @@ use num_bigint::BigUint;
 use num_traits::Num;
 
 use crate::{
-    ast::{Ast, AstError, Expr, ExprVariant, Label, Path, Symbol},
+    ast::{Ast, AstError, BaseExpr, Expr, ExprVariant, Label, Path, Symbol},
     natural::Natural,
 };
 
@@ -15,13 +15,12 @@ use crate::{
 pub fn parser() -> impl Parser<char, Ast, Error = Error> {
     let expr = recursive(|expr| {
         labels_with_expr(expr_with_path(choice((
-            sexpr(expr)
-                .map_with_span(|ast, span| Expr::<()>::variant(span, ExprVariant::SExpr(ast))),
+            sexpr(expr).map_with_span(|ast, span| BaseExpr::variant(span, ExprVariant::SExpr(ast))),
             natural().map_with_span(|natural, span| {
-                Expr::<()>::variant(span, ExprVariant::Natural(natural))
+                BaseExpr::variant(span, ExprVariant::Natural(natural))
             }),
             symbol().map_with_span(|symbol, span| {
-                Expr::<()>::variant(span, ExprVariant::Symbol(Symbol::unresolved(symbol)))
+                BaseExpr::variant(span, ExprVariant::Symbol(Symbol::unresolved(symbol)))
             }),
         ))))
     });
@@ -39,7 +38,7 @@ pub fn parser() -> impl Parser<char, Ast, Error = Error> {
 }
 
 fn labels_with_expr(
-    expr: impl Parser<char, Result<Expr<()>, ()>, Error = Error> + Clone,
+    expr: impl Parser<char, Result<BaseExpr, ()>, Error = Error> + Clone,
 ) -> impl Parser<char, Result<Expr, ()>, Error = Error> + Clone {
     let labels_with_expr = label()
         .separated_by(text::whitespace())
@@ -76,8 +75,8 @@ fn label() -> impl Parser<char, Result<Label, ()>, Error = Error> + Clone {
 }
 
 fn expr_with_path(
-    expr: impl Parser<char, Expr<()>, Error = Error> + Clone,
-) -> impl Parser<char, Result<Expr<()>, ()>, Error = Error> + Clone {
+    expr: impl Parser<char, BaseExpr, Error = Error> + Clone,
+) -> impl Parser<char, Result<BaseExpr, ()>, Error = Error> + Clone {
     expr.then(path())
         .validate(|(expr, path), _span, emit| {
             path.and_then(|path| {
