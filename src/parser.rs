@@ -20,7 +20,10 @@ pub fn parser() -> impl Parser<char, Ast, Error = Error> {
                 BaseExpr::variant(span, ExprVariant::Natural(natural))
             }),
             symbol().map_with_span(|symbol, span| {
-                BaseExpr::variant(span, ExprVariant::Symbol(Symbol::unresolved(symbol)))
+                BaseExpr::variant(
+                    span.clone(),
+                    ExprVariant::Symbol(Symbol::unresolved(vec![Label::new(span, symbol)])),
+                )
             }),
         ))))
     });

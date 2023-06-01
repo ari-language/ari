@@ -107,11 +107,7 @@ impl Expr {
         span: Range<usize>,
         symbol: impl Into<String>,
     ) -> Self {
-        Self::variant(
-            labels,
-            span,
-            ExprVariant::Symbol(Symbol::unresolved(symbol)),
-        )
+        Self::path(labels, span.clone(), [Label::new(span, symbol)])
     }
 
     pub fn path(
@@ -119,11 +115,7 @@ impl Expr {
         span: Range<usize>,
         path: impl Into<Box<Path>>,
     ) -> Self {
-        Self::variant(
-            labels,
-            span,
-            ExprVariant::Symbol(Symbol::unresolved_path(path)),
-        )
+        Self::variant(labels, span, ExprVariant::Symbol(Symbol::unresolved(path)))
     }
 
     pub fn sexpr(labels: impl Into<Box<[Label]>>, span: Range<usize>, ast: impl Into<Ast>) -> Self {
@@ -173,19 +165,17 @@ impl BaseExpr {
                 variant: match self.variant {
                     ExprVariant::Natural(_) => return Err((path, depth)),
                     ExprVariant::Symbol(symbol) => {
-                        ExprVariant::Symbol(Symbol::UnresolvedPath(match symbol {
+                        ExprVariant::Symbol(match symbol {
                             // into_vec: https://github.com/rust-lang/rust/issues/59878
-                            Symbol::Unresolved(symbol) => [Label::new(self.span, symbol)]
-                                .into_iter()
-                                .chain(path.into_vec().into_iter().skip(depth))
-                                .collect(),
-                            Symbol::UnresolvedPath(orig_path) => orig_path
-                                .into_vec()
-                                .into_iter()
-                                .chain(path.into_vec().into_iter().skip(depth))
-                                .collect(),
+                            Symbol::Unresolved(orig_path) => Symbol::Unresolved(
+                                orig_path
+                                    .into_vec()
+                                    .into_iter()
+                                    .chain(path.into_vec().into_iter().skip(depth))
+                                    .collect(),
+                            ),
                             Symbol::Resolved(_) => unreachable!(),
-                        }))
+                        })
                     }
                     ExprVariant::SExpr(ast) => match ast.expr_from_label.get(label).copied() {
                         Some(index) => {
@@ -241,11 +231,8 @@ pub enum ExprVariant {
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub enum Symbol {
-    /// References an [Expr] by its label.
-    Unresolved(String),
-
     /// References a label path to an [Expr].
-    UnresolvedPath(Box<Path>),
+    Unresolved(Box<Path>),
 
     /// A resolved symbol to a parent [Expr] + a path to a child
     /// [Expr]. An empty path would be a self-reference.
@@ -253,12 +240,8 @@ pub enum Symbol {
 }
 
 impl Symbol {
-    pub fn unresolved(symbol: impl Into<String>) -> Self {
-        Self::Unresolved(symbol.into())
-    }
-
-    pub fn unresolved_path(path: impl Into<Box<Path>>) -> Self {
-        Self::UnresolvedPath(path.into())
+    pub fn unresolved(path: impl Into<Box<Path>>) -> Self {
+        Self::Unresolved(path.into())
     }
 }
 
