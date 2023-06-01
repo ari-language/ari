@@ -191,19 +191,12 @@ impl BaseExpr {
                 span: self.span.start..path.last().unwrap().span.end,
                 variant: match self.variant {
                     ExprVariant::Natural(_) => return Err((path, depth)),
-                    ExprVariant::Symbol(symbol) => {
-                        ExprVariant::Symbol(match symbol {
-                            // into_vec: https://github.com/rust-lang/rust/issues/59878
-                            Symbol::Unresolved(orig_path) => Symbol::Unresolved(
-                                orig_path
-                                    .into_vec()
-                                    .into_iter()
-                                    .chain(path.into_vec().into_iter().skip(depth))
-                                    .collect(),
-                            ),
-                            Symbol::Resolved(_) => unreachable!(),
-                        })
-                    }
+                    ExprVariant::Symbol(symbol) => ExprVariant::Symbol(match symbol {
+                        Symbol::Unresolved(orig_path) => Symbol::Unresolved(
+                            orig_path.join(path.into_vec().into_iter().skip(depth)),
+                        ),
+                        Symbol::Resolved(_) => unreachable!(),
+                    }),
                     ExprVariant::SExpr(ast) => match ast.expr_from_label.get(label).copied() {
                         Some(index) => {
                             ast.into_iter()
@@ -232,19 +225,38 @@ pub enum ExprVariant {
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub enum Symbol {
     /// References a label path to an [Expr].
-    Unresolved(Box<Path>),
+    Unresolved(UnresolvedSymbol),
 
     /// A resolved symbol to a parent [Expr] + a path to a child
     /// [Expr]. An empty path would be a self-reference.
-    Resolved(Box<ResolvedPath>),
+    Resolved(ResolvedSymbol),
 }
 
 impl Symbol {
     pub fn unresolved(path: impl Into<Box<Path>>) -> Self {
-        Self::Unresolved(path.into())
+        Self::Unresolved(UnresolvedSymbol { path: path.into() })
+    }
+}
+
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct UnresolvedSymbol {
+    pub path: Box<Path>,
+}
+
+impl UnresolvedSymbol {
+    fn join(self, path: impl IntoIterator<Item = Label>) -> Self {
+        Self {
+            // into_vec: https://github.com/rust-lang/rust/issues/59878
+            path: self.path.into_vec().into_iter().chain(path).collect(),
+        }
     }
 }
 
 pub type Path = [Label];
+
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct ResolvedSymbol {
+    pub path: Box<ResolvedPath>,
+}
 
 pub type ResolvedPath = [usize];
