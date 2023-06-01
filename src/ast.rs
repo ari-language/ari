@@ -133,6 +133,33 @@ impl Expr {
     }
 }
 
+#[derive(Debug, Clone, Eq)]
+pub struct Label {
+    pub span: Range<usize>,
+    pub symbol: String,
+}
+
+impl PartialEq for Label {
+    fn eq(&self, other: &Self) -> bool {
+        self.symbol.eq(&other.symbol)
+    }
+}
+
+impl Hash for Label {
+    fn hash<H: std::hash::Hasher>(&self, state: &mut H) {
+        self.symbol.hash(state)
+    }
+}
+
+impl Label {
+    pub fn new(span: Range<usize>, symbol: impl Into<String>) -> Self {
+        Self {
+            span,
+            symbol: symbol.into(),
+        }
+    }
+}
+
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct BaseExpr {
     pub span: Range<usize>,
@@ -192,33 +219,6 @@ impl BaseExpr {
             },
             None => self,
         })
-    }
-}
-
-#[derive(Debug, Clone, Eq)]
-pub struct Label {
-    pub span: Range<usize>,
-    pub symbol: String,
-}
-
-impl PartialEq for Label {
-    fn eq(&self, other: &Self) -> bool {
-        self.symbol.eq(&other.symbol)
-    }
-}
-
-impl Hash for Label {
-    fn hash<H: std::hash::Hasher>(&self, state: &mut H) {
-        self.symbol.hash(state)
-    }
-}
-
-impl Label {
-    pub fn new(span: Range<usize>, symbol: impl Into<String>) -> Self {
-        Self {
-            span,
-            symbol: symbol.into(),
-        }
     }
 }
 
