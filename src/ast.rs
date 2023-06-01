@@ -129,15 +129,11 @@ impl Expr {
         Self::variant(labels, span, ExprVariant::SExpr(ast.into()))
     }
 
-    #[no_coverage]
     pub fn span(&self) -> Range<usize> {
         let start = self
             .labels
             .first()
-            .map(
-                #[no_coverage]
-                |Label { span, .. }| span.start,
-            )
+            .map(|Label { span, .. }| span.start)
             .unwrap_or(self.base.span.start);
 
         start..self.base.span.end

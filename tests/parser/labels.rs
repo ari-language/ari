@@ -236,3 +236,17 @@ fn must_be_unique_different_expr() {
         )
     );
 }
+
+#[test]
+fn expr_span() {
+    assert_eq!(
+        parser()
+            .parse(":label 256")
+            .unwrap()
+            .into_iter()
+            .next()
+            .unwrap()
+            .span(),
+        0..10
+    );
+}
