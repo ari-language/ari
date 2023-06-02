@@ -1,6 +1,6 @@
 use num_bigint::BigUint;
 
-#[derive(Debug, Clone, PartialEq, Eq)]
+#[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub enum Natural {
     Unaligned(BigUint),
     ByteAligned(usize),

@@ -3,7 +3,7 @@ use std::{collections::HashMap, hash::Hash, ops::Range, vec::IntoIter};
 use crate::natural::Natural;
 
 /// Ari's "abstract syntax tree"
-#[derive(Debug, Clone, Eq, Default)]
+#[derive(Debug, Clone, Default)]
 pub struct Ast {
     exprs: Box<[Expr]>,
     expr_from_label: HashMap<Label, usize>,
@@ -71,12 +71,20 @@ impl PartialEq for Ast {
     }
 }
 
+impl Eq for Ast {}
+
+impl Hash for Ast {
+    fn hash<H: std::hash::Hasher>(&self, state: &mut H) {
+        self.exprs.hash(state)
+    }
+}
+
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub enum AstError {
     DuplicateLabel(Range<usize>, Range<usize>),
 }
 
-#[derive(Debug, Clone, PartialEq, Eq)]
+#[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub struct Expr {
     pub labels: Box<[Label]>,
     pub base: BaseExpr,
@@ -160,7 +168,7 @@ impl Label {
     }
 }
 
-#[derive(Debug, Clone, PartialEq, Eq)]
+#[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub struct BaseExpr {
     pub span: Range<usize>,
     pub variant: ExprVariant,
@@ -215,14 +223,14 @@ impl BaseExpr {
     }
 }
 
-#[derive(Debug, Clone, PartialEq, Eq)]
+#[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub enum ExprVariant {
     Natural(Natural),
     Symbol(Symbol),
     SExpr(Ast),
 }
 
-#[derive(Debug, Clone, PartialEq, Eq)]
+#[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub enum Symbol {
     /// References a label path to an [Expr].
     Unresolved(UnresolvedSymbol),
@@ -238,7 +246,7 @@ impl Symbol {
     }
 }
 
-#[derive(Debug, Clone, PartialEq, Eq)]
+#[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub struct UnresolvedSymbol {
     pub path: Box<Path>,
 }
@@ -254,7 +262,7 @@ impl UnresolvedSymbol {
 
 pub type Path = [Label];
 
-#[derive(Debug, Clone, PartialEq, Eq)]
+#[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub struct ResolvedSymbol {
     pub path: Box<ResolvedPath>,
 }
