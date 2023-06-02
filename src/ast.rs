@@ -6,7 +6,7 @@ use crate::natural::Natural;
 #[derive(Debug, Clone, Default)]
 pub struct Ast {
     exprs: Box<[Expr]>,
-    expr_from_label: HashMap<Label, usize>,
+    expr_from_label: HashMap<String, (usize, usize)>,
 }
 
 impl Ast {
@@ -26,29 +26,27 @@ impl Ast {
         iter: impl IntoIterator<Item = Expr>,
         emit: &mut dyn FnMut(AstError),
     ) -> Self {
-        let mut expr_from_label = HashMap::<Label, usize>::new();
-
-        let exprs = iter
-            .into_iter()
-            .enumerate()
-            .map(|(expr_ref, expr)| {
-                for label in expr.labels.iter() {
-                    if let Some((other_label, _)) = expr_from_label.get_key_value(label) {
-                        emit(AstError::DuplicateLabel(
-                            label.span.clone(),
-                            other_label.span.clone(),
-                        ));
-                    } else {
-                        expr_from_label.insert(label.clone(), expr_ref);
-                    }
+        let iter = iter.into_iter();
+        let mut exprs: Vec<Expr> = Vec::with_capacity(iter.size_hint().0);
+        let mut expr_from_label = HashMap::<String, (usize, usize)>::new();
+        for (index, expr) in iter.enumerate() {
+            exprs.push(expr);
+            let expr = &exprs[index];
+            for (label_index, label) in expr.labels.iter().enumerate() {
+                if let Some((other_index, other_label_index)) = expr_from_label.get(&label.symbol) {
+                    emit(AstError::DuplicateLabel(
+                        label.span.clone(),
+                        exprs[*other_index].labels[*other_label_index].span.clone(),
+                    ));
+                } else {
+                    expr_from_label.insert(label.symbol.clone(), (index, label_index));
                 }
-
-                expr
-            })
-            .collect();
+            }
+        }
 
         Self {
-            exprs, // TODO: Try to resolve all the symbols we can in this scope
+            // TODO: Try to resolve all the symbols we can in this scope
+            exprs: exprs.into_boxed_slice(),
             expr_from_label,
         }
     }
@@ -141,22 +139,10 @@ impl Expr {
     }
 }
 
-#[derive(Debug, Clone, Eq)]
+#[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub struct Label {
     pub span: Range<usize>,
     pub symbol: String,
-}
-
-impl PartialEq for Label {
-    fn eq(&self, other: &Self) -> bool {
-        self.symbol.eq(&other.symbol)
-    }
-}
-
-impl Hash for Label {
-    fn hash<H: std::hash::Hasher>(&self, state: &mut H) {
-        self.symbol.hash(state)
-    }
 }
 
 impl Label {
@@ -205,17 +191,19 @@ impl BaseExpr {
                         ),
                         Symbol::Resolved(_) => unreachable!(),
                     }),
-                    ExprVariant::SExpr(ast) => match ast.expr_from_label.get(label).copied() {
-                        Some(index) => {
-                            ast.into_iter()
-                                .nth(index)
-                                .unwrap()
-                                .base
-                                .with_path_rec(path, depth + 1)?
-                                .variant
+                    ExprVariant::SExpr(ast) => {
+                        match ast.expr_from_label.get(&label.symbol).copied() {
+                            Some((index, _)) => {
+                                ast.into_iter()
+                                    .nth(index)
+                                    .unwrap()
+                                    .base
+                                    .with_path_rec(path, depth + 1)?
+                                    .variant
+                            }
+                            None => return Err((path, depth)),
                         }
-                        None => return Err((path, depth)),
-                    },
+                    }
                 },
             },
             None => self,
