@@ -7,14 +7,17 @@ use num_bigint::BigUint;
 use num_traits::Num;
 
 use crate::{
-    ast::{Ast, AstError, BaseExpr, Expr, ExprVariant, Label, Path, Symbol},
+    ast::{
+        Ast, AstError, BaseExpr, Expr, ExprVariant, Label, Labels, Reference, Symbol,
+        UnresolvedPath,
+    },
     natural::Natural,
 };
 
 // TODO: Ref, Deref, extended labels & text expressions
 pub fn parser() -> impl Parser<char, Ast, Error = Error> {
     ast(recursive(|expr| {
-        labels_with_expr(expr_with_path(choice((
+        labelled(reference(choice((
             sexpr(expr).map_with_span(|ast, span| BaseExpr::variant(span, ExprVariant::SExpr(ast))),
             natural().map_with_span(|natural, span| {
                 BaseExpr::variant(span, ExprVariant::Natural(natural))
@@ -22,7 +25,7 @@ pub fn parser() -> impl Parser<char, Ast, Error = Error> {
             symbol().map_with_span(|symbol, span| {
                 BaseExpr::variant(
                     span.clone(),
-                    ExprVariant::Symbol(Symbol::unresolved(vec![Label::new(span, symbol)])),
+                    ExprVariant::Reference(Reference::unresolved(Symbol::new(span, symbol), [])),
                 )
             }),
         ))))
@@ -39,13 +42,13 @@ pub fn parser() -> impl Parser<char, Ast, Error = Error> {
     )
 }
 
-fn labels_with_expr(
+fn labelled(
     expr: impl Parser<char, Result<BaseExpr, ()>, Error = Error> + Clone,
 ) -> impl Parser<char, Result<Expr, ()>, Error = Error> + Clone {
     let labels_with_expr = label()
         .separated_by(text::whitespace())
         .at_least(1)
-        .collect::<Result<Box<[Label]>, ()>>()
+        .collect::<Result<Box<Labels>, ()>>()
         .then_ignore(text::whitespace().at_least(1).or_not())
         .then(expr.clone().or_not())
         .validate(|(labels, expr), span, emit| match labels {
@@ -58,7 +61,7 @@ fn labels_with_expr(
                 None => Err(()),
             },
         })
-        .labelled(ErrorLabel::LabelsWithExpr);
+        .labelled(ErrorLabel::LabelledExpr);
 
     choice((
         labels_with_expr,
@@ -76,7 +79,7 @@ fn label() -> impl Parser<char, Result<Label, ()>, Error = Error> + Clone {
         .labelled(ErrorLabel::Label)
 }
 
-fn expr_with_path(
+fn reference(
     expr: impl Parser<char, BaseExpr, Error = Error> + Clone,
 ) -> impl Parser<char, Result<BaseExpr, ()>, Error = Error> + Clone {
     expr.then(path())
@@ -86,10 +89,10 @@ fn expr_with_path(
                     .map_err(|span| emit(Error::invalid_path(span)))
             })
         })
-        .labelled(ErrorLabel::ExprWithPath)
+        .labelled(ErrorLabel::Reference)
 }
 
-fn path() -> impl Parser<char, Result<Box<Path>, ()>, Error = Error> + Clone {
+fn path() -> impl Parser<char, Result<Box<UnresolvedPath>, ()>, Error = Error> + Clone {
     label().repeated().collect().labelled(ErrorLabel::Path)
 }
 
@@ -253,8 +256,8 @@ pub enum ErrorLabel {
     Natural,
     Symbol,
     Label,
-    LabelsWithExpr,
+    LabelledExpr,
     Path,
-    ExprWithPath,
+    Reference,
     SExpr,
 }

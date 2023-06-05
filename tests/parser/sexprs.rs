@@ -17,7 +17,7 @@ fn sexpr() {
                     [],
                     0..24,
                     Ast::try_from_exprs([
-                        Expr::symbol([], 1..2, "*"),
+                        Expr::unresolved_symbol([], 1..2, "*"),
                         Expr::natural([Label::new(3..5, "r")], 6..9, 256u16),
                         Expr::natural([Label::new(10..12, "g")], 13..16, 256u16),
                         Expr::natural([Label::new(17..19, "b")], 20..23, 256u16),
@@ -70,7 +70,7 @@ fn cant_have_left_paren() {
             ),
             vec![Error::unexpected_end(1)
                 .with_label(ErrorLabel::SExpr)
-                .with_label(ErrorLabel::ExprWithPath)],
+                .with_label(ErrorLabel::Reference)],
         )
     );
 }

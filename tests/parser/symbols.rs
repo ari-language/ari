@@ -12,7 +12,7 @@ fn symbol() {
     assert_eq!(
         parser().parse_recovery("symbol"),
         (
-            Some(Ast::try_from_exprs([Expr::symbol([], 0..6, "symbol")]).unwrap()),
+            Some(Ast::try_from_exprs([Expr::unresolved_symbol([], 0..6, "symbol")]).unwrap()),
             vec![],
         )
     );
@@ -38,7 +38,10 @@ fn supports_builtin_sexpr_names() {
             (
                 parser().parse_recovery(symbol),
                 (
-                    Some(Ast::try_from_exprs([Expr::symbol([], 0..symbol.len(), symbol)]).unwrap()),
+                    Some(
+                        Ast::try_from_exprs([Expr::unresolved_symbol([], 0..symbol.len(), symbol)])
+                            .unwrap(),
+                    ),
                     vec![],
                 ),
             )
@@ -53,7 +56,7 @@ fn supports_almost_all_of_unicode_with_exceptions() {
     assert_eq!(
         parser().parse_recovery("🙃"),
         (
-            Some(Ast::try_from_exprs([Expr::symbol([], 0..1, "🙃")]).unwrap()),
+            Some(Ast::try_from_exprs([Expr::unresolved_symbol([], 0..1, "🙃")]).unwrap()),
             vec![]
         )
     );
@@ -64,7 +67,7 @@ fn cant_have_whitespace() {
     assert_eq!(
         parser().parse_recovery("symbol "),
         (
-            Some(Ast::try_from_exprs([Expr::symbol([], 0..6, "symbol")]).unwrap()),
+            Some(Ast::try_from_exprs([Expr::unresolved_symbol([], 0..6, "symbol")]).unwrap()),
             vec![],
         )
     );
@@ -80,7 +83,7 @@ fn cant_have_colon() {
                 .with_label(ErrorLabel::Symbol)
                 .with_label(ErrorLabel::Label)
                 .with_label(ErrorLabel::Path)
-                .with_label(ErrorLabel::ExprWithPath)],
+                .with_label(ErrorLabel::Reference)],
         )
     );
 }
@@ -90,7 +93,7 @@ fn cant_have_left_paren() {
     assert_eq!(
         parser().parse_recovery("symbol("),
         (
-            Some(Ast::try_from_exprs([Expr::symbol([], 0..6, "symbol")]).unwrap()),
+            Some(Ast::try_from_exprs([Expr::unresolved_symbol([], 0..6, "symbol")]).unwrap()),
             vec![Error::trailing_garbage(6..7)],
         )
     );
@@ -101,7 +104,7 @@ fn cant_have_right_paren() {
     assert_eq!(
         parser().parse_recovery("symbol)"),
         (
-            Some(Ast::try_from_exprs([Expr::symbol([], 0..6, "symbol")]).unwrap()),
+            Some(Ast::try_from_exprs([Expr::unresolved_symbol([], 0..6, "symbol")]).unwrap()),
             vec![Error::trailing_garbage(6..7)],
         ),
     );

@@ -33,19 +33,19 @@ impl Ast {
             exprs.push(expr);
             let expr = &exprs[index];
             for (label_index, label) in expr.labels.iter().enumerate() {
-                if let Some((other_index, other_label_index)) = expr_from_label.get(&label.symbol) {
+                if let Some((other_index, other_label_index)) = expr_from_label.get(&label.name) {
                     emit(AstError::DuplicateLabel(
                         label.span.clone(),
                         exprs[*other_index].labels[*other_label_index].span.clone(),
                     ));
                 } else {
-                    expr_from_label.insert(label.symbol.clone(), (index, label_index));
+                    expr_from_label.insert(label.name.clone(), (index, label_index));
                 }
             }
         }
 
         Self {
-            // TODO: Try to resolve all the symbols we can in this scope
+            // TODO: Try to resolve all the references we can in this scope
             exprs: exprs.into_boxed_slice(),
             expr_from_label,
         }
@@ -85,13 +85,13 @@ pub enum AstError {
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub struct Expr {
-    pub labels: Box<[Label]>,
+    pub labels: Box<Labels>,
     pub base: BaseExpr,
 }
 
 impl Expr {
     pub fn variant(
-        labels: impl Into<Box<[Label]>>,
+        labels: impl Into<Box<Labels>>,
         span: Range<usize>,
         variant: ExprVariant,
     ) -> Self {
@@ -102,30 +102,35 @@ impl Expr {
     }
 
     pub fn natural(
-        labels: impl Into<Box<[Label]>>,
+        labels: impl Into<Box<Labels>>,
         span: Range<usize>,
         natural: impl Into<Natural>,
     ) -> Self {
         Self::variant(labels, span, ExprVariant::Natural(natural.into()))
     }
 
-    pub fn symbol(
-        labels: impl Into<Box<[Label]>>,
+    pub fn unresolved_symbol(
+        labels: impl Into<Box<Labels>>,
         span: Range<usize>,
-        symbol: impl Into<String>,
+        name: impl Into<String>,
     ) -> Self {
-        Self::path(labels, span.clone(), [Label::new(span, symbol)])
+        Self::unresolved_reference(labels, span.clone(), Symbol::new(span, name), [])
     }
 
-    pub fn path(
-        labels: impl Into<Box<[Label]>>,
+    pub fn unresolved_reference(
+        labels: impl Into<Box<Labels>>,
         span: Range<usize>,
-        path: impl Into<Box<Path>>,
+        root: Symbol,
+        path: impl Into<Box<UnresolvedPath>>,
     ) -> Self {
-        Self::variant(labels, span, ExprVariant::Symbol(Symbol::unresolved(path)))
+        Self::variant(
+            labels,
+            span,
+            ExprVariant::Reference(Reference::unresolved(root, path)),
+        )
     }
 
-    pub fn sexpr(labels: impl Into<Box<[Label]>>, span: Range<usize>, ast: impl Into<Ast>) -> Self {
+    pub fn sexpr(labels: impl Into<Box<Labels>>, span: Range<usize>, ast: impl Into<Ast>) -> Self {
         Self::variant(labels, span, ExprVariant::SExpr(ast.into()))
     }
 
@@ -141,21 +146,6 @@ impl Expr {
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
-pub struct Label {
-    pub span: Range<usize>,
-    pub symbol: String,
-}
-
-impl Label {
-    pub fn new(span: Range<usize>, symbol: impl Into<String>) -> Self {
-        Self {
-            span,
-            symbol: symbol.into(),
-        }
-    }
-}
-
-#[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub struct BaseExpr {
     pub span: Range<usize>,
     pub variant: ExprVariant,
@@ -166,7 +156,11 @@ impl BaseExpr {
         Self { span, variant }
     }
 
-    pub(crate) fn with_path(self, path: Box<Path>) -> Result<Self, Range<usize>> {
+    pub(crate) fn with_labels(self, labels: Box<Labels>) -> Expr {
+        Expr { labels, base: self }
+    }
+
+    pub(crate) fn with_path(self, path: Box<UnresolvedPath>) -> Result<Self, Range<usize>> {
         self.with_path_rec(path, 0).map_err(|(path, depth)| {
             let start = path.get(depth).unwrap().span.start;
             let end = path.last().unwrap().span.end;
@@ -174,26 +168,25 @@ impl BaseExpr {
         })
     }
 
-    pub(crate) fn with_labels(self, labels: Box<[Label]>) -> Expr {
-        Expr { labels, base: self }
-    }
-}
-
-impl BaseExpr {
-    fn with_path_rec(self, path: Box<Path>, depth: usize) -> Result<Self, (Box<Path>, usize)> {
+    fn with_path_rec(
+        self,
+        path: Box<UnresolvedPath>,
+        depth: usize,
+    ) -> Result<Self, (Box<UnresolvedPath>, usize)> {
         Ok(match path.get(depth) {
-            Some(label) => Self {
+            Some(symbol) => Self {
                 span: self.span.start..path.last().unwrap().span.end,
                 variant: match self.variant {
                     ExprVariant::Natural(_) => return Err((path, depth)),
-                    ExprVariant::Symbol(symbol) => ExprVariant::Symbol(match symbol {
-                        Symbol::Unresolved(orig_path) => Symbol::Unresolved(
-                            orig_path.join(path.into_vec().into_iter().skip(depth)),
-                        ),
-                        Symbol::Resolved(_) => unreachable!(),
+                    ExprVariant::Reference(reference) => ExprVariant::Reference(match reference {
+                        Reference::Unresolved(unresolved) => {
+                            // into_vec: https://github.com/rust-lang/rust/issues/59878
+                            Reference::Unresolved(unresolved.join(path.into_vec()))
+                        }
+                        Reference::Resolved(_) => unreachable!(),
                     }),
                     ExprVariant::SExpr(ast) => {
-                        match ast.expr_from_label.get(&label.symbol).copied() {
+                        match ast.expr_from_label.get(&symbol.name).copied() {
                             Some((index, _)) => {
                                 ast.into_iter()
                                     .nth(index)
@@ -215,45 +208,86 @@ impl BaseExpr {
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub enum ExprVariant {
     Natural(Natural),
-    Symbol(Symbol),
+    Reference(Reference),
     SExpr(Ast),
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
-pub enum Symbol {
-    /// References a label path to an [Expr].
-    Unresolved(UnresolvedSymbol),
-
-    /// A resolved symbol to a parent [Expr] + a path to a child
-    /// [Expr]. An empty path would be a self-reference.
-    Resolved(ResolvedSymbol),
+pub enum Reference {
+    Unresolved(UnresolvedReference),
+    Resolved(ResolvedReference),
 }
 
-impl Symbol {
-    pub fn unresolved(path: impl Into<Box<Path>>) -> Self {
-        Self::Unresolved(UnresolvedSymbol { path: path.into() })
+impl Reference {
+    pub fn unresolved(root: Symbol, path: impl Into<Box<UnresolvedPath>>) -> Self {
+        Self::Unresolved(UnresolvedReference {
+            root,
+            path: path.into(),
+        })
     }
 }
 
+/// A chain of symbols pointing to an [Expr] within the current scope.
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
-pub struct UnresolvedSymbol {
-    pub path: Box<Path>,
+pub struct UnresolvedReference {
+    pub root: Symbol,
+    pub path: Box<UnresolvedPath>,
 }
 
-impl UnresolvedSymbol {
-    fn join(self, path: impl IntoIterator<Item = Label>) -> Self {
+impl UnresolvedReference {
+    fn join(self, other: impl IntoIterator<Item = Label>) -> Self {
+        // into_vec: https://github.com/rust-lang/rust/issues/59878
         Self {
-            // into_vec: https://github.com/rust-lang/rust/issues/59878
-            path: self.path.into_vec().into_iter().chain(path).collect(),
+            root: self.root,
+            path: self
+                .path
+                .into_vec()
+                .into_iter()
+                .chain(other.into_iter())
+                .collect(),
         }
     }
 }
 
-pub type Path = [Label];
+pub type UnresolvedPath = [Label];
 
+/// A resolved relative path to a parent [Expr].
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
-pub struct ResolvedSymbol {
+pub struct ResolvedReference {
+    pub root: usize,
     pub path: Box<ResolvedPath>,
 }
 
 pub type ResolvedPath = [usize];
+
+pub type Labels = [Label];
+
+#[derive(Debug, Clone, PartialEq, Eq, Hash)]
+pub struct Label {
+    pub span: Range<usize>,
+    pub name: String,
+}
+
+impl Label {
+    pub fn new(span: Range<usize>, name: impl Into<String>) -> Self {
+        Self {
+            span,
+            name: name.into(),
+        }
+    }
+}
+
+#[derive(Debug, Clone, PartialEq, Eq, Hash)]
+pub struct Symbol {
+    pub span: Range<usize>,
+    pub name: String,
+}
+
+impl Symbol {
+    pub fn new(span: Range<usize>, name: impl Into<String>) -> Self {
+        Self {
+            span,
+            name: name.into(),
+        }
+    }
+}

@@ -71,11 +71,11 @@ fn names_cant_have_colon() {
                 Error::unexpected_char(1..2, ':')
                     .with_label(ErrorLabel::Symbol)
                     .with_label(ErrorLabel::Label)
-                    .with_label(ErrorLabel::LabelsWithExpr),
+                    .with_label(ErrorLabel::LabelledExpr),
                 Error::unexpected_char(2..3, ' ')
                     .with_label(ErrorLabel::Symbol)
                     .with_label(ErrorLabel::Label)
-                    .with_label(ErrorLabel::LabelsWithExpr),
+                    .with_label(ErrorLabel::LabelledExpr),
             ],
         )
     );
@@ -98,11 +98,11 @@ fn names_cant_have_left_paren() {
                 Error::unexpected_char(1..2, '(')
                     .with_label(ErrorLabel::Symbol)
                     .with_label(ErrorLabel::Label)
-                    .with_label(ErrorLabel::LabelsWithExpr),
+                    .with_label(ErrorLabel::LabelledExpr),
                 Error::unexpected_end(6)
                     .with_label(ErrorLabel::SExpr)
-                    .with_label(ErrorLabel::ExprWithPath)
-                    .with_label(ErrorLabel::LabelsWithExpr)
+                    .with_label(ErrorLabel::Reference)
+                    .with_label(ErrorLabel::LabelledExpr)
             ],
         )
     );
@@ -118,7 +118,7 @@ fn names_cant_have_right_paren() {
                 Error::unexpected_char(1..2, ')')
                     .with_label(ErrorLabel::Symbol)
                     .with_label(ErrorLabel::Label)
-                    .with_label(ErrorLabel::LabelsWithExpr),
+                    .with_label(ErrorLabel::LabelledExpr),
                 Error::trailing_garbage(1..6),
             ],
         )
@@ -134,7 +134,7 @@ fn must_have_name() {
             vec![Error::unexpected_char(1..2, ' ')
                 .with_label(ErrorLabel::Symbol)
                 .with_label(ErrorLabel::Label)
-                .with_label(ErrorLabel::LabelsWithExpr)],
+                .with_label(ErrorLabel::LabelledExpr)],
         )
     );
 }
@@ -151,9 +151,9 @@ fn must_have_name_in_sexpr() {
             vec![Error::unexpected_char(2..3, ' ')
                 .with_label(ErrorLabel::Symbol)
                 .with_label(ErrorLabel::Label)
-                .with_label(ErrorLabel::LabelsWithExpr)
+                .with_label(ErrorLabel::LabelledExpr)
                 .with_label(ErrorLabel::SExpr)
-                .with_label(ErrorLabel::ExprWithPath)],
+                .with_label(ErrorLabel::Reference)],
         )
     );
 }
@@ -164,7 +164,7 @@ fn must_have_associated_expr() {
         parser().parse_recovery(":label "),
         (
             Some(Ast::try_from_exprs([]).unwrap()),
-            vec![Error::unexpected_end(7).with_label(ErrorLabel::LabelsWithExpr)]
+            vec![Error::unexpected_end(7).with_label(ErrorLabel::LabelledExpr)]
         )
     );
 }
@@ -179,9 +179,9 @@ fn must_have_associated_expr_in_sexpr() {
                     .unwrap()
             ),
             vec![Error::unexpected_end(8)
-                .with_label(ErrorLabel::LabelsWithExpr)
+                .with_label(ErrorLabel::LabelledExpr)
                 .with_label(ErrorLabel::SExpr)
-                .with_label(ErrorLabel::ExprWithPath)]
+                .with_label(ErrorLabel::Reference)]
         )
     );
 }
