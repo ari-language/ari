@@ -67,10 +67,16 @@ fn names_cant_have_colon() {
         parser().parse_recovery(":: 256"),
         (
             Some(Ast::try_from_exprs([Expr::natural([], 3..6, 256u16)]).unwrap()),
-            vec![Error::unexpected_char(1..2, ':')
-                .with_label(ErrorLabel::Symbol)
-                .with_label(ErrorLabel::Label)
-                .with_label(ErrorLabel::LabelsWithExpr)],
+            vec![
+                Error::unexpected_char(1..2, ':')
+                    .with_label(ErrorLabel::Symbol)
+                    .with_label(ErrorLabel::Label)
+                    .with_label(ErrorLabel::LabelsWithExpr),
+                Error::unexpected_char(2..3, ' ')
+                    .with_label(ErrorLabel::Symbol)
+                    .with_label(ErrorLabel::Label)
+                    .with_label(ErrorLabel::LabelsWithExpr),
+            ],
         )
     );
 }
@@ -80,11 +86,24 @@ fn names_cant_have_left_paren() {
     assert_eq!(
         parser().parse_recovery(":( 256"),
         (
-            Some(Ast::try_from_exprs([Expr::natural([], 3..6, 256u16)]).unwrap()),
-            vec![Error::unexpected_char(1..2, '(')
-                .with_label(ErrorLabel::Symbol)
-                .with_label(ErrorLabel::Label)
-                .with_label(ErrorLabel::LabelsWithExpr)],
+            Some(
+                Ast::try_from_exprs([Expr::sexpr(
+                    [],
+                    1..6,
+                    Ast::try_from_exprs([Expr::natural([], 3..6, 256u16)]).unwrap()
+                )])
+                .unwrap()
+            ),
+            vec![
+                Error::unexpected_char(1..2, '(')
+                    .with_label(ErrorLabel::Symbol)
+                    .with_label(ErrorLabel::Label)
+                    .with_label(ErrorLabel::LabelsWithExpr),
+                Error::unexpected_end(6)
+                    .with_label(ErrorLabel::SExpr)
+                    .with_label(ErrorLabel::ExprWithPath)
+                    .with_label(ErrorLabel::LabelsWithExpr)
+            ],
         )
     );
 }
@@ -94,11 +113,14 @@ fn names_cant_have_right_paren() {
     assert_eq!(
         parser().parse_recovery(":) 256"),
         (
-            Some(Ast::try_from_exprs([Expr::natural([], 3..6, 256u16)]).unwrap()),
-            vec![Error::unexpected_char(1..2, ')')
-                .with_label(ErrorLabel::Symbol)
-                .with_label(ErrorLabel::Label)
-                .with_label(ErrorLabel::LabelsWithExpr)],
+            Some(Ast::try_from_exprs([]).unwrap()),
+            vec![
+                Error::unexpected_char(1..2, ')')
+                    .with_label(ErrorLabel::Symbol)
+                    .with_label(ErrorLabel::Label)
+                    .with_label(ErrorLabel::LabelsWithExpr),
+                Error::trailing_garbage(1..6),
+            ],
         )
     );
 }

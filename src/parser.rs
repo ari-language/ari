@@ -13,7 +13,7 @@ use crate::{
 
 // TODO: Ref, Deref, extended labels & text expressions
 pub fn parser() -> impl Parser<char, Ast, Error = Error> {
-    let expr = recursive(|expr| {
+    ast(recursive(|expr| {
         labels_with_expr(expr_with_path(choice((
             sexpr(expr).map_with_span(|ast, span| BaseExpr::variant(span, ExprVariant::SExpr(ast))),
             natural().map_with_span(|natural, span| {
@@ -26,18 +26,17 @@ pub fn parser() -> impl Parser<char, Ast, Error = Error> {
                 )
             }),
         ))))
-    });
-
-    let trailing_garbage = any()
-        .ignored()
-        .repeated()
-        .validate(|trailing_garbage, span, emit| {
-            if !trailing_garbage.is_empty() {
-                emit(Error::trailing_garbage(span))
-            }
-        });
-
-    ast(expr).then_ignore(trailing_garbage)
+    }))
+    .then_ignore(
+        any()
+            .ignored()
+            .repeated()
+            .validate(|trailing_garbage, span, emit| {
+                if !trailing_garbage.is_empty() {
+                    emit(Error::trailing_garbage(span))
+                }
+            }),
+    )
 }
 
 fn labels_with_expr(
@@ -47,7 +46,7 @@ fn labels_with_expr(
         .separated_by(text::whitespace())
         .at_least(1)
         .collect::<Result<Box<[Label]>, ()>>()
-        .then_ignore(required_whitespace().or_not())
+        .then_ignore(text::whitespace().at_least(1).or_not())
         .then(expr.clone().or_not())
         .validate(|(labels, expr), span, emit| match labels {
             Ok(labels) => match expr {
@@ -111,7 +110,7 @@ fn sexpr(
 fn ast(
     expr: impl Parser<char, Result<Expr, ()>, Error = Error> + Clone,
 ) -> impl Parser<char, Ast, Error = Error> + Clone {
-    expr.separated_by(required_whitespace())
+    expr.separated_by(text::whitespace().at_least(1))
         .flatten()
         .validate(|exprs, _span, emit| {
             Ast::try_from_exprs_with_emit(exprs, &mut |err| {
@@ -158,14 +157,6 @@ fn symbol_char(c: &char) -> bool {
         ':' | '(' | ')' => false,
         c => !c.is_whitespace(),
     }
-}
-
-fn required_whitespace() -> impl Parser<char, (), Error = Error> + Copy + Clone {
-    filter(|c: &char| c.is_whitespace())
-        .ignored()
-        .repeated()
-        .at_least(1)
-        .ignored()
 }
 
 #[derive(Debug, PartialEq, Eq, Clone)]

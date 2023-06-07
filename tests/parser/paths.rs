@@ -102,11 +102,14 @@ fn cant_have_left_paren() {
         parser().parse_recovery("symbol:("),
         (
             Some(Ast::try_from_exprs([]).unwrap()),
-            vec![Error::unexpected_char(7..8, '(')
-                .with_label(ErrorLabel::Symbol)
-                .with_label(ErrorLabel::Label)
-                .with_label(ErrorLabel::Path)
-                .with_label(ErrorLabel::ExprWithPath)],
+            vec![
+                Error::unexpected_char(7..8, '(')
+                    .with_label(ErrorLabel::Symbol)
+                    .with_label(ErrorLabel::Label)
+                    .with_label(ErrorLabel::Path)
+                    .with_label(ErrorLabel::ExprWithPath),
+                Error::trailing_garbage(7..8),
+            ],
         )
     );
 }
@@ -117,11 +120,14 @@ fn cant_have_right_paren() {
         parser().parse_recovery("symbol:)"),
         (
             Some(Ast::try_from_exprs([]).unwrap()),
-            vec![Error::unexpected_char(7..8, ')')
-                .with_label(ErrorLabel::Symbol)
-                .with_label(ErrorLabel::Label)
-                .with_label(ErrorLabel::Path)
-                .with_label(ErrorLabel::ExprWithPath)],
+            vec![
+                Error::unexpected_char(7..8, ')')
+                    .with_label(ErrorLabel::Symbol)
+                    .with_label(ErrorLabel::Label)
+                    .with_label(ErrorLabel::Path)
+                    .with_label(ErrorLabel::ExprWithPath),
+                Error::trailing_garbage(7..8),
+            ],
         )
     );
 }
