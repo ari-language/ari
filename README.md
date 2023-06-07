@@ -1113,7 +1113,10 @@ Combined with the empty set `()`, we derive a unary form of interval
 
 <!-- (scope) -->
 
-<!-- Self referencing has to be possible, how can we refer to something with the same name in the parent scope? -->
+<!--
+Self referencing has to be possible, how can we refer to
+something with the same name in the parent scope?
+-->
 
 ## License
 
