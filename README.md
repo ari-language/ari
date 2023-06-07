@@ -1117,7 +1117,7 @@ Combined with the empty set `()`, we derive a unary form of interval
 
 ## License
 
-Copyright (C) 2022 Kira Bruneau
+Copyright (C) 2023 Kira Bruneau
 
 This program is free software: you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by
