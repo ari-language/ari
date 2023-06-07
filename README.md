@@ -6,6 +6,10 @@ A type-centred [purely functional
 programming](https://en.wikipedia.org/wiki/Purely_functional_programming)
 language designed to type binary files.
 
+Funding for Ari is provided by [NLnet](https://nlnet.nl) and the
+European Commission through the [NGI
+Assure](https://www.assure.ngi.eu) initiative.
+
 ## Why does this exist?
 
 ### To make binary files more accessible
