@@ -8,7 +8,7 @@ use num_traits::Num;
 
 use crate::{
     ast::{
-        Ast, AstError, BaseExpr, Expr, ExprVariant, Label, Labels, Reference, Symbol,
+        path_span, Ast, AstError, BaseExpr, Expr, ExprVariant, Label, Labels, Reference, Symbol,
         UnresolvedPath,
     },
     natural::Natural,
@@ -85,8 +85,8 @@ fn reference(
     expr.then(path())
         .validate(|(expr, path), _span, emit| {
             path.and_then(|path| {
-                expr.with_path(path)
-                    .map_err(|span| emit(Error::invalid_path(span)))
+                expr.take_from_path(path)
+                    .map_err(|(path, depth)| emit(Error::invalid_path(path_span(&path[depth..]))))
             })
         })
         .labelled(ErrorLabel::Reference)
@@ -121,6 +121,7 @@ fn ast(
                     AstError::DuplicateLabel(span, other_span) => {
                         Error::duplicate_label(span, other_span)
                     }
+                    AstError::InvalidPath(span) => Error::invalid_path(span),
                 })
             })
         })
