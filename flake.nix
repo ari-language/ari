@@ -21,17 +21,46 @@
         nixpkgs.follows = "nixpkgs";
       };
     };
+
+    fenix = {
+      url = "github:nix-community/fenix";
+      inputs = {
+        nixpkgs.follows = "nixpkgs";
+      };
+    };
   };
 
-  outputs = { self, flake-utils, flake-linter, nixpkgs, crane }:
+  outputs = { self, flake-utils, flake-linter, nixpkgs, crane, fenix }:
     let
       lib = nixpkgs.lib;
       systems = [ "x86_64-linux" ];
     in
     flake-utils.lib.eachSystem systems (system:
       let
-        pkgs = nixpkgs.legacyPackages.${system} // {
-          craneLib = crane.lib.${system};
+        pkgs = import nixpkgs {
+          overlays = [
+            fenix.overlays.default
+            (final: prev:
+              let
+                toolchain = final.fenix.complete.withComponents [
+                  "cargo"
+                  "clippy"
+                  "llvm-tools"
+                  "rust-analyzer"
+                  "rustc"
+                  "rustfmt"
+                ];
+              in
+              {
+                cargo = toolchain;
+                clippy = toolchain;
+                craneLib = crane.lib.${system}.overrideToolchain toolchain;
+                rustc = toolchain;
+                rustfmt = toolchain;
+              })
+          ];
+
+          inherit system;
         };
 
         callPackage = pkgs.newScope pkgs;
@@ -59,6 +88,8 @@
             nixpkgs-fmt.paths = paths.nix;
             rustfmt.paths = paths.rust;
           };
+
+          inherit pkgs;
         };
       in
       rec {
@@ -79,8 +110,8 @@
         devShells.default = packages.default.overrideAttrs (attrs: {
           doCheck = true;
           checkInputs = with pkgs; [
-            cargo-tarpaulin
-            clippy
+            checks.clippy.nativeBuildInputs
+            checks.coverage.nativeBuildInputs
             linter.nativeBuildInputs
             nodePackages.markdown-link-check
           ];

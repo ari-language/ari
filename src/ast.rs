@@ -72,6 +72,7 @@ impl PartialEq for Ast {
 impl Eq for Ast {}
 
 impl Hash for Ast {
+    #[no_coverage]
     fn hash<H: std::hash::Hasher>(&self, state: &mut H) {
         self.exprs.hash(state)
     }
@@ -128,11 +129,15 @@ impl Expr {
         Self::variant(labels, span, ExprVariant::SExpr(ast.into()))
     }
 
+    #[no_coverage]
     pub fn span(&self) -> Range<usize> {
         let start = self
             .labels
             .first()
-            .map(|Label { span, .. }| span.start)
+            .map(
+                #[no_coverage]
+                |Label { span, .. }| span.start,
+            )
             .unwrap_or(self.base.span.start);
 
         start..self.base.span.end

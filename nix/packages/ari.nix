@@ -1,5 +1,7 @@
 { lib
 , craneLib
+, fenix
+, cargo-nextest
 }:
 
 let
@@ -21,8 +23,12 @@ craneLib.buildPackage {
       cargoClippyExtraArgs = "--all-targets -- --deny warnings";
     };
 
-    coverage = craneLib.cargoTarpaulin {
+    # FIXME: This doesn't seem to use the prebuilt artifacts
+    coverage = craneLib.cargoLlvmCov {
       inherit src cargoArtifacts;
+      nativeBuildInputs = [ cargo-nextest ];
+      cargoLLvmCovCommand = "nextest";
+      cargoLlvmCovExtraArgs = "--ignore-filename-regex /nix/store --show-missing-lines --lcov --output-path $out";
     };
   };
 
