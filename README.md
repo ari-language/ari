@@ -688,7 +688,7 @@ To encode quotes in this expression, double them up:
 ```
 
 > **NOTE** This follows the same behaviour as [extended symbol
-> expressions](extended-symbol-expressions)
+> expressions](#extended-symbol-expressions)
 
 Text not bound to any particular encoding context will be interpreted
 as utf-8, but this can be changed with text encoding macros:
