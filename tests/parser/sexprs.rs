@@ -1,7 +1,7 @@
 use pretty_assertions::assert_eq;
 
 use ari::{
-    ast::{Ast, Expr, Label},
+    ast::{Expr, Label, Scope},
     parser::{parser, Error, ErrorLabel},
 };
 
@@ -13,10 +13,10 @@ fn sexpr() {
         parser().parse_recovery("(* :r 256 :g 256 :b 256)"),
         (
             Some(
-                Ast::try_from_exprs([Expr::sexpr(
+                Scope::try_from_exprs([Expr::sexpr(
                     [],
                     0..24,
-                    Ast::try_from_exprs([
+                    Scope::try_from_exprs([
                         Expr::unresolved_symbol([], 1..2, "*"),
                         Expr::natural([Label::new(3..5, "r")], 6..9, 256u16),
                         Expr::natural([Label::new(10..12, "g")], 13..16, 256u16),
@@ -37,7 +37,7 @@ fn empty() {
         parser().parse_recovery("()"),
         (
             Some(
-                Ast::try_from_exprs([Expr::sexpr([], 0..2, Ast::try_from_exprs([]).unwrap())])
+                Scope::try_from_exprs([Expr::sexpr([], 0..2, Scope::try_from_exprs([]).unwrap())])
                     .unwrap()
             ),
             vec![]
@@ -51,7 +51,7 @@ fn empty_with_padding() {
         parser().parse_recovery("( )"),
         (
             Some(
-                Ast::try_from_exprs([Expr::sexpr([], 0..3, Ast::try_from_exprs([]).unwrap())])
+                Scope::try_from_exprs([Expr::sexpr([], 0..3, Scope::try_from_exprs([]).unwrap())])
                     .unwrap()
             ),
             vec![]
@@ -65,7 +65,7 @@ fn cant_have_left_paren() {
         parser().parse_recovery("("),
         (
             Some(
-                Ast::try_from_exprs([Expr::sexpr([], 0..1, Ast::try_from_exprs([]).unwrap())])
+                Scope::try_from_exprs([Expr::sexpr([], 0..1, Scope::try_from_exprs([]).unwrap())])
                     .unwrap()
             ),
             vec![Error::unexpected_end(1)
@@ -80,7 +80,7 @@ fn cant_have_right_paren() {
     assert_eq!(
         parser().parse_recovery(")"),
         (
-            Some(Ast::try_from_exprs([]).unwrap()),
+            Some(Scope::try_from_exprs([]).unwrap()),
             vec![Error::trailing_garbage(0..1)],
         )
     );

@@ -1,7 +1,7 @@
 use pretty_assertions::assert_eq;
 
 use ari::{
-    ast::{Ast, Expr, Label, Symbol},
+    ast::{Expr, Label, Scope, Symbol},
     parser::{parser, Error, ErrorLabel},
 };
 
@@ -13,7 +13,7 @@ fn back_reference() {
         parser().parse_recovery(":a 256 :b a"),
         (
             Some(
-                Ast::try_from_exprs([
+                Scope::try_from_exprs([
                     Expr::natural([Label::new(0..2, "a")], 3..6, 256u16),
                     Expr::resolved_reference([Label::new(7..9, "b")], 10..11, 0, -1, []),
                 ])
@@ -30,7 +30,7 @@ fn forward_reference() {
         parser().parse_recovery(":a b :b 256"),
         (
             Some(
-                Ast::try_from_exprs([
+                Scope::try_from_exprs([
                     Expr::resolved_reference([Label::new(0..2, "a")], 3..4, 0, 1, []),
                     Expr::natural([Label::new(5..7, "b")], 8..11, 256u16),
                 ])
@@ -47,7 +47,7 @@ fn direct_self_reference() {
         parser().parse_recovery(":a a"),
         (
             Some(
-                Ast::try_from_exprs([Expr::resolved_reference(
+                Scope::try_from_exprs([Expr::resolved_reference(
                     [Label::new(0..2, "a")],
                     3..4,
                     0,
@@ -67,10 +67,10 @@ fn nested_self_reference() {
         parser().parse_recovery(":a (+ a 256)"),
         (
             Some(
-                Ast::try_from_exprs([Expr::sexpr(
+                Scope::try_from_exprs([Expr::sexpr(
                     [Label::new(0..2, "a")],
                     3..12,
-                    Ast::try_from_exprs([
+                    Scope::try_from_exprs([
                         Expr::unresolved_symbol([], 4..5, "+"),
                         Expr::resolved_reference([], 6..7, 1, 0, []),
                         Expr::natural([], 8..11, 256u16),
@@ -90,7 +90,7 @@ fn indirect_self_reference() {
         parser().parse_recovery(":a b :b a"),
         (
             Some(
-                Ast::try_from_exprs([
+                Scope::try_from_exprs([
                     Expr::resolved_reference([Label::new(0..2, "a")], 3..4, 0, 1, []),
                     Expr::resolved_reference([Label::new(5..7, "b")], 8..9, 0, -1, []),
                 ])
@@ -107,7 +107,7 @@ fn indirect_unresolved_reference() {
         parser().parse_recovery(":a c :b a"),
         (
             Some(
-                Ast::try_from_exprs([
+                Scope::try_from_exprs([
                     Expr::unresolved_symbol([Label::new(0..2, "a")], 3..4, "c"),
                     Expr::resolved_reference([Label::new(5..7, "b")], 8..9, 0, -1, [])
                 ])
@@ -124,12 +124,12 @@ fn back_reference_in_parent_scope() {
         parser().parse_recovery(":a 256 (* :b a)"),
         (
             Some(
-                Ast::try_from_exprs([
+                Scope::try_from_exprs([
                     Expr::natural([Label::new(0..2, "a")], 3..6, 256u16),
                     Expr::sexpr(
                         [],
                         7..15,
-                        Ast::try_from_exprs([
+                        Scope::try_from_exprs([
                             Expr::unresolved_symbol([], 8..9, "*"),
                             Expr::resolved_reference([Label::new(10..12, "b")], 13..14, 1, -1, []),
                         ])
@@ -149,11 +149,11 @@ fn forward_reference_in_parent_scope() {
         parser().parse_recovery("(* :a b) :b 256"),
         (
             Some(
-                Ast::try_from_exprs([
+                Scope::try_from_exprs([
                     Expr::sexpr(
                         [],
                         0..8,
-                        Ast::try_from_exprs([
+                        Scope::try_from_exprs([
                             Expr::unresolved_symbol([], 1..2, "*"),
                             Expr::resolved_reference([Label::new(3..5, "a")], 6..7, 1, 1, []),
                         ])
@@ -174,11 +174,11 @@ fn back_reference_in_sibling_scope() {
         parser().parse_recovery(":a (* :b 256) :b a:b"),
         (
             Some(
-                Ast::try_from_exprs([
+                Scope::try_from_exprs([
                     Expr::sexpr(
                         [Label::new(0..2, "a")],
                         3..13,
-                        Ast::try_from_exprs([
+                        Scope::try_from_exprs([
                             Expr::unresolved_symbol([], 4..5, "*"),
                             Expr::natural([Label::new(6..8, "b")], 9..12, 256u16),
                         ])
@@ -199,12 +199,12 @@ fn forward_reference_in_sibling_scope() {
         parser().parse_recovery(":a b:a :b (* :a 256)"),
         (
             Some(
-                Ast::try_from_exprs([
+                Scope::try_from_exprs([
                     Expr::resolved_reference([Label::new(0..2, "a")], 3..6, 0, 1, [1]),
                     Expr::sexpr(
                         [Label::new(7..9, "b")],
                         10..20,
-                        Ast::try_from_exprs([
+                        Scope::try_from_exprs([
                             Expr::unresolved_symbol([], 11..12, "*"),
                             Expr::natural([Label::new(13..15, "a")], 16..19, 256u16),
                         ])
@@ -224,10 +224,10 @@ fn invalid_reference_path() {
         parser().parse_recovery("(* :a 256 :b a:b)"),
         (
             Some(
-                Ast::try_from_exprs([Expr::sexpr(
+                Scope::try_from_exprs([Expr::sexpr(
                     [],
                     0..17,
-                    Ast::try_from_exprs([
+                    Scope::try_from_exprs([
                         Expr::unresolved_symbol([], 1..2, "*"),
                         Expr::natural([Label::new(3..5, "a")], 6..9, 256u16),
                         Expr::unresolved_reference(
@@ -237,7 +237,7 @@ fn invalid_reference_path() {
                             [Label::new(14..16, "b")]
                         )
                     ])
-                    .unwrap_or_else(|(_err, ast)| ast)
+                    .unwrap_or_else(|(_err, scope)| scope)
                 )])
                 .unwrap()
             ),
@@ -254,20 +254,20 @@ fn partially_invalid_reference_path() {
         parser().parse_recovery(":a (* :x (* :y (* :z 256)) :b a:x:y:b)"),
         (
             Some(
-                Ast::try_from_exprs([Expr::sexpr(
+                Scope::try_from_exprs([Expr::sexpr(
                     [Label::new(0..2, "a")],
                     3..38,
-                    Ast::try_from_exprs([
+                    Scope::try_from_exprs([
                         Expr::unresolved_symbol([], 4..5, "*"),
                         Expr::sexpr(
                             [Label::new(6..8, "x")],
                             9..26,
-                            Ast::try_from_exprs([
+                            Scope::try_from_exprs([
                                 Expr::unresolved_symbol([], 10..11, "*"),
                                 Expr::sexpr(
                                     [Label::new(12..14, "y")],
                                     15..25,
-                                    Ast::try_from_exprs([
+                                    Scope::try_from_exprs([
                                         Expr::unresolved_symbol([], 16..17, "*"),
                                         Expr::natural([Label::new(18..20, "z")], 21..24, 256u16),
                                     ])
@@ -289,7 +289,7 @@ fn partially_invalid_reference_path() {
                     ])
                     .unwrap()
                 )])
-                .unwrap_or_else(|(_err, ast)| ast)
+                .unwrap_or_else(|(_err, scope)| scope)
             ),
             vec![Error::invalid_path(35..37)],
         ),

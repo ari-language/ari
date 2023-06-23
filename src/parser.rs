@@ -8,17 +8,18 @@ use num_traits::Num;
 
 use crate::{
     ast::{
-        path_span, Ast, AstError, BaseExpr, Expr, ExprVariant, Label, Labels, Reference, Symbol,
-        UnresolvedPath,
+        path_span, BaseExpr, Expr, ExprVariant, Label, Labels, Reference, Scope, ScopeError,
+        Symbol, UnresolvedPath,
     },
     natural::Natural,
 };
 
 // TODO: Ref, Deref, extended labels & text expressions
-pub fn parser() -> impl Parser<char, Ast, Error = Error> {
-    ast(recursive(|expr| {
+pub fn parser() -> impl Parser<char, Scope, Error = Error> {
+    scope(recursive(|expr| {
         labelled(reference(choice((
-            sexpr(expr).map_with_span(|ast, span| BaseExpr::variant(span, ExprVariant::SExpr(ast))),
+            sexpr(expr)
+                .map_with_span(|scope, span| BaseExpr::variant(span, ExprVariant::SExpr(scope))),
             natural().map_with_span(|natural, span| {
                 BaseExpr::variant(span, ExprVariant::Natural(natural))
             }),
@@ -98,8 +99,8 @@ fn path() -> impl Parser<char, Result<Box<UnresolvedPath>, ()>, Error = Error> +
 
 fn sexpr(
     expr: impl Parser<char, Result<Expr, ()>, Error = Error> + Clone,
-) -> impl Parser<char, Ast, Error = Error> + Clone {
-    ast(expr)
+) -> impl Parser<char, Scope, Error = Error> + Clone {
+    scope(expr)
         .delimited_by(
             just('('),
             just(')')
@@ -110,18 +111,18 @@ fn sexpr(
         .labelled(ErrorLabel::SExpr)
 }
 
-fn ast(
+fn scope(
     expr: impl Parser<char, Result<Expr, ()>, Error = Error> + Clone,
-) -> impl Parser<char, Ast, Error = Error> + Clone {
+) -> impl Parser<char, Scope, Error = Error> + Clone {
     expr.separated_by(text::whitespace().at_least(1))
         .flatten()
         .validate(|exprs, _span, emit| {
-            Ast::try_from_exprs_with_emit(exprs, &mut |err| {
+            Scope::try_from_exprs_with_emit(exprs, &mut |err| {
                 emit(match err {
-                    AstError::DuplicateLabel(span, other_span) => {
+                    ScopeError::DuplicateLabel(span, other_span) => {
                         Error::duplicate_label(span, other_span)
                     }
-                    AstError::InvalidPath(span) => Error::invalid_path(span),
+                    ScopeError::InvalidPath(span) => Error::invalid_path(span),
                 })
             })
         })

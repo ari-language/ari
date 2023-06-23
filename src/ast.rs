@@ -9,9 +9,12 @@ use std::{
 
 use crate::natural::Natural;
 
-/// Ari's "abstract syntax tree"
+/// A collection of labelled expressions where all references have
+/// been resolved by matching labels introduced in the scope.
+///
+/// Acts as the root element for Ari's "abstract syntax tree".
 #[derive(Default)]
-pub struct Ast {
+pub struct Scope {
     exprs: Box<[Expr]>,
     expr_from_label: HashMap<String, (usize, usize)>,
 
@@ -20,22 +23,22 @@ pub struct Ast {
     unresolved_map: Cell<Option<HashMap<String, Vec<(usize, *mut Reference)>>>>,
 }
 
-impl Ast {
+impl Scope {
     pub fn try_from_exprs(
         iter: impl IntoIterator<Item = Expr>,
-    ) -> Result<Ast, (Box<[AstError]>, Ast)> {
+    ) -> Result<Scope, (Box<[ScopeError]>, Scope)> {
         let mut errors = Vec::new();
-        let ast = Self::try_from_exprs_with_emit(iter, &mut |err| errors.push(err));
+        let scope = Self::try_from_exprs_with_emit(iter, &mut |err| errors.push(err));
         if errors.is_empty() {
-            Ok(ast)
+            Ok(scope)
         } else {
-            Err((errors.into_boxed_slice(), ast))
+            Err((errors.into_boxed_slice(), scope))
         }
     }
 
     pub fn try_from_exprs_with_emit(
         iter: impl IntoIterator<Item = Expr>,
-        emit: &mut dyn FnMut(AstError),
+        emit: &mut dyn FnMut(ScopeError),
     ) -> Self {
         let iter = iter.into_iter();
         let mut exprs = Vec::with_capacity(iter.size_hint().0);
@@ -47,7 +50,7 @@ impl Ast {
                 if let Some((other_index, other_label_index)) =
                     expr_from_label.get(&label.name).copied()
                 {
-                    emit(AstError::DuplicateLabel(
+                    emit(ScopeError::DuplicateLabel(
                         label.span.clone(),
                         exprs[other_index].labels[other_label_index].span.clone(),
                     ));
@@ -79,7 +82,7 @@ impl Ast {
                                         });
                                     }
                                 }
-                                Err(path) => emit(AstError::InvalidPath(path_span(path))),
+                                Err(path) => emit(ScopeError::InvalidPath(path_span(path))),
                             };
                         } else {
                             // Don't need to handle when symbol is already in unresolved_map, since
@@ -89,8 +92,9 @@ impl Ast {
                     }
                     Reference::Resolved(_path) => (),
                 },
-                ExprVariant::SExpr(ast) => {
-                    for (symbol, mut references) in ast.unresolved_map.take().into_iter().flatten()
+                ExprVariant::SExpr(scope) => {
+                    for (symbol, mut references) in
+                        scope.unresolved_map.take().into_iter().flatten()
                     {
                         if let Some((other_index, _)) = expr_from_label.get(&symbol).copied() {
                             let expr = &exprs[other_index];
@@ -107,7 +111,7 @@ impl Ast {
                                                 path,
                                             });
                                         }
-                                        Err(path) => emit(AstError::InvalidPath(path_span(path))),
+                                        Err(path) => emit(ScopeError::InvalidPath(path_span(path))),
                                     }
                                 }
                             }
@@ -138,36 +142,36 @@ impl Ast {
     }
 }
 
-impl fmt::Debug for Ast {
+impl fmt::Debug for Scope {
     #[no_coverage]
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> Result<(), fmt::Error> {
         self.exprs.fmt(f)
     }
 }
 
-impl Clone for Ast {
+impl Clone for Scope {
     #[no_coverage]
     fn clone(&self) -> Self {
         Self::try_from_exprs(self.exprs.iter().cloned()).unwrap()
     }
 }
 
-impl PartialEq for Ast {
+impl PartialEq for Scope {
     fn eq(&self, other: &Self) -> bool {
         self.exprs.eq(&other.exprs)
     }
 }
 
-impl Eq for Ast {}
+impl Eq for Scope {}
 
-impl Hash for Ast {
+impl Hash for Scope {
     #[no_coverage]
     fn hash<H: Hasher>(&self, state: &mut H) {
         self.exprs.hash(state)
     }
 }
 
-impl IntoIterator for Ast {
+impl IntoIterator for Scope {
     type Item = Expr;
 
     type IntoIter = IntoIter<Self::Item>;
@@ -179,7 +183,7 @@ impl IntoIterator for Ast {
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
-pub enum AstError {
+pub enum ScopeError {
     DuplicateLabel(Range<usize>, Range<usize>),
     InvalidPath(Range<usize>),
 }
@@ -245,8 +249,12 @@ impl Expr {
         )
     }
 
-    pub fn sexpr(labels: impl Into<Box<Labels>>, span: Range<usize>, ast: impl Into<Ast>) -> Self {
-        Self::variant(labels, span, ExprVariant::SExpr(ast.into()))
+    pub fn sexpr(
+        labels: impl Into<Box<Labels>>,
+        span: Range<usize>,
+        scope: impl Into<Scope>,
+    ) -> Self {
+        Self::variant(labels, span, ExprVariant::SExpr(scope.into()))
     }
 
     pub fn span(&self) -> Range<usize> {
@@ -282,9 +290,9 @@ impl BaseExpr {
         let mut expr = self;
         let mut resolved = Vec::with_capacity(unresolved.len());
         while let Some((label, remainder)) = unresolved.split_first() {
-            let ExprVariant::SExpr(ast) = &expr.variant else { return Err(unresolved) };
-            let Some((index, _)) = ast.expr_from_label.get(&label.name).copied() else { return Err(unresolved) };
-            expr = &ast.exprs[index].base;
+            let ExprVariant::SExpr(scope) = &expr.variant else { return Err(unresolved) };
+            let Some((index, _)) = scope.expr_from_label.get(&label.name).copied() else { return Err(unresolved) };
+            expr = &scope.exprs[index].base;
             unresolved = remainder;
             resolved.push(index);
         }
@@ -316,10 +324,11 @@ impl BaseExpr {
                         }
                         Reference::Resolved(_) => unreachable!(),
                     }),
-                    ExprVariant::SExpr(ast) => {
-                        match ast.expr_from_label.get(&label.name).copied() {
+                    ExprVariant::SExpr(scope) => {
+                        match scope.expr_from_label.get(&label.name).copied() {
                             Some((index, _)) => {
-                                ast.into_iter()
+                                scope
+                                    .into_iter()
                                     .nth(index)
                                     .unwrap()
                                     .base
@@ -340,7 +349,7 @@ impl BaseExpr {
 pub enum ExprVariant {
     Natural(Natural),
     Reference(Reference),
-    SExpr(Ast),
+    SExpr(Scope),
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
