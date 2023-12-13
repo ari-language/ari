@@ -1,6 +1,6 @@
 { lib
 , craneLib
-, fenix
+, craneLibLLvmTools
 , cargo-nextest
 }:
 
@@ -23,8 +23,7 @@ craneLib.buildPackage {
       cargoClippyExtraArgs = "--all-targets -- --deny warnings";
     };
 
-    # FIXME: This doesn't seem to use the prebuilt artifacts
-    coverage = craneLib.cargoLlvmCov {
+    coverage = craneLibLLvmTools.cargoLlvmCov {
       inherit src cargoArtifacts;
       nativeBuildInputs = [ cargo-nextest ];
       cargoLLvmCovCommand = "nextest";

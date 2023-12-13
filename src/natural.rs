@@ -16,7 +16,7 @@ impl From<u8> for Natural {
 }
 
 impl From<u16> for Natural {
-    #[no_coverage]
+    #[cfg_attr(coverage_nightly, coverage(off))]
     fn from(value: u16) -> Self {
         Natural::ByteAligned(match value {
             0x1 => 0,
@@ -27,7 +27,7 @@ impl From<u16> for Natural {
 }
 
 impl From<u32> for Natural {
-    #[no_coverage]
+    #[cfg_attr(coverage_nightly, coverage(off))]
     fn from(value: u32) -> Self {
         Natural::ByteAligned(match value {
             0x1 => 0,
@@ -40,7 +40,7 @@ impl From<u32> for Natural {
 }
 
 impl From<u64> for Natural {
-    #[no_coverage]
+    #[cfg_attr(coverage_nightly, coverage(off))]
     fn from(value: u64) -> Self {
         Natural::ByteAligned(match value {
             0x1 => 0,

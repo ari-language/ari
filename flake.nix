@@ -12,12 +12,11 @@
       };
     };
 
-    nixpkgs.url = "nixpkgs/release-23.05";
+    nixpkgs.url = "nixpkgs/release-23.11";
 
     crane = {
       url = "github:ipetkov/crane";
       inputs = {
-        flake-utils.follows = "flake-utils";
         nixpkgs.follows = "nixpkgs";
       };
     };
@@ -40,24 +39,15 @@
         pkgs = import nixpkgs {
           overlays = [
             fenix.overlays.default
-            (final: prev:
-              let
-                toolchain = final.fenix.complete.withComponents [
+            (final: prev: {
+              craneLib = crane.lib.${system};
+              craneLibLLvmTools = crane.lib.${system}.overrideToolchain
+                (fenix.packages.${system}.complete.withComponents [
                   "cargo"
-                  "clippy"
                   "llvm-tools"
-                  "rust-analyzer"
                   "rustc"
-                  "rustfmt"
-                ];
-              in
-              {
-                cargo = toolchain;
-                clippy = toolchain;
-                craneLib = crane.lib.${system}.overrideToolchain toolchain;
-                rustc = toolchain;
-                rustfmt = toolchain;
-              })
+                ]);
+            })
           ];
 
           inherit system;

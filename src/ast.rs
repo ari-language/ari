@@ -110,7 +110,11 @@ impl Scope {
                                 // NOTE: Could use paths instead of pointers to avoid unsafe, but
                                 // would be more complicated and less efficient
                                 unsafe {
-                                    let ReferenceVariant::Unresolved(unresolved) = &*reference else { unreachable!() };
+                                    let ReferenceVariant::Unresolved(unresolved) = &*reference
+                                    else {
+                                        unreachable!()
+                                    };
+
                                     match expr.base.resolve_path(&unresolved.path) {
                                         Ok(path) => {
                                             *reference =
@@ -152,14 +156,14 @@ impl Scope {
 }
 
 impl fmt::Debug for Scope {
-    #[no_coverage]
+    #[cfg_attr(coverage_nightly, coverage(off))]
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> Result<(), fmt::Error> {
         self.exprs.fmt(f)
     }
 }
 
 impl Clone for Scope {
-    #[no_coverage]
+    #[cfg_attr(coverage_nightly, coverage(off))]
     fn clone(&self) -> Self {
         Self::try_from_exprs(self.exprs.iter().cloned()).unwrap()
     }
@@ -292,8 +296,14 @@ impl BaseExpr {
         let mut expr = self;
         let mut resolved = Vec::with_capacity(unresolved.len());
         while let Some((label, remainder)) = unresolved.split_first() {
-            let ExprVariant::SExpr(scope) = &expr.variant else { return Err(unresolved) };
-            let Some((index, _)) = scope.expr_from_label.get(&label.name).copied() else { return Err(unresolved) };
+            let ExprVariant::SExpr(scope) = &expr.variant else {
+                return Err(unresolved);
+            };
+
+            let Some((index, _)) = scope.expr_from_label.get(&label.name).copied() else {
+                return Err(unresolved);
+            };
+
             expr = &scope.exprs[index].base;
             unresolved = remainder;
             resolved.push(index);
@@ -400,12 +410,7 @@ impl UnresolvedReference {
         // into_vec: https://github.com/rust-lang/rust/issues/59878
         Self {
             symbol: self.symbol,
-            path: self
-                .path
-                .into_vec()
-                .into_iter()
-                .chain(other.into_iter())
-                .collect(),
+            path: self.path.into_vec().into_iter().chain(other).collect(),
         }
     }
 }
