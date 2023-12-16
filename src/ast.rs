@@ -1,8 +1,7 @@
 use std::{
-    cell::Cell,
+    cell::{Cell, RefCell},
     collections::{hash_map, HashMap},
     fmt,
-    hash::{Hash, Hasher},
     ops::Range,
     vec::IntoIter,
 };
@@ -20,7 +19,7 @@ pub struct Scope {
 
     // TODO: Redesign `unresolved_map` as a radix tree
     #[allow(clippy::type_complexity)]
-    unresolved_map: Cell<Option<HashMap<String, Vec<(usize, *mut Reference)>>>>,
+    unresolved_map: Cell<Option<HashMap<String, Vec<(usize, *mut ReferenceVariant)>>>>,
 }
 
 impl Scope {
@@ -60,38 +59,47 @@ impl Scope {
             }
         }
 
-        let mut unresolved_map: HashMap<String, Vec<(usize, *mut Reference)>> = HashMap::new();
+        let mut unresolved_map: HashMap<String, Vec<(usize, *mut ReferenceVariant)>> =
+            HashMap::new();
+
         for (index, expr) in exprs.iter().enumerate() {
             match &expr.base.variant {
                 ExprVariant::Natural(_natural) => (),
-                ExprVariant::Reference(reference) => match reference {
-                    Reference::Unresolved(unresolved) => {
-                        let reference = reference as *const Reference as *mut Reference;
-                        let symbol = &unresolved.symbol.name;
-                        if let Some((other_index, _)) = expr_from_label.get(symbol).copied() {
-                            let other_expr = &exprs[other_index];
-                            match other_expr.base.resolve_path(unresolved.path.as_ref()) {
-                                Ok(path) => {
-                                    // NOTE: Could wrap Reference with RefCell to avoid unsafe, but would be more
-                                    // complicated and less efficient
-                                    unsafe {
-                                        *reference = Reference::Resolved(ResolvedReference {
+                ExprVariant::Reference(reference) => {
+                    let resolved = match &*reference.cell.borrow() {
+                        ReferenceVariant::Unresolved(unresolved) => {
+                            let symbol = &unresolved.symbol.name;
+                            if let Some((other_index, _)) = expr_from_label.get(symbol).copied() {
+                                let other_expr = &exprs[other_index];
+                                match other_expr.base.resolve_path(unresolved.path.as_ref()) {
+                                    Ok(path) => {
+                                        Some(ReferenceVariant::Resolved(ResolvedReference {
                                             scope: 0,
                                             offset: other_index as isize - index as isize,
                                             path,
-                                        });
+                                        }))
+                                    }
+                                    Err(path) => {
+                                        emit(ScopeError::InvalidPath(path_span(path)));
+                                        None
                                     }
                                 }
-                                Err(path) => emit(ScopeError::InvalidPath(path_span(path))),
-                            };
-                        } else {
-                            // Don't need to handle when symbol is already in unresolved_map, since
-                            // we can't have duplicate labels in the same scope
-                            unresolved_map.insert(symbol.clone(), vec![(1, reference)]);
+                            } else {
+                                // Don't need to handle when symbol is already in unresolved_map, since
+                                // we can't have duplicate labels in the same scope
+                                unresolved_map
+                                    .insert(symbol.clone(), vec![(1, reference.cell.as_ptr())]);
+
+                                None
+                            }
                         }
+                        ReferenceVariant::Resolved(_path) => None,
+                    };
+
+                    if let Some(resolved) = resolved {
+                        *reference.cell.borrow_mut() = resolved;
                     }
-                    Reference::Resolved(_path) => (),
-                },
+                }
                 ExprVariant::SExpr(scope) => {
                     for (symbol, mut references) in
                         scope.unresolved_map.take().into_iter().flatten()
@@ -102,14 +110,15 @@ impl Scope {
                                 // NOTE: Could use paths instead of pointers to avoid unsafe, but
                                 // would be more complicated and less efficient
                                 unsafe {
-                                    let Reference::Unresolved(unresolved) = &*reference else { unreachable!() };
+                                    let ReferenceVariant::Unresolved(unresolved) = &*reference else { unreachable!() };
                                     match expr.base.resolve_path(&unresolved.path) {
                                         Ok(path) => {
-                                            *reference = Reference::Resolved(ResolvedReference {
-                                                scope,
-                                                offset: other_index as isize - index as isize,
-                                                path,
-                                            });
+                                            *reference =
+                                                ReferenceVariant::Resolved(ResolvedReference {
+                                                    scope,
+                                                    offset: other_index as isize - index as isize,
+                                                    path,
+                                                });
                                         }
                                         Err(path) => emit(ScopeError::InvalidPath(path_span(path))),
                                     }
@@ -164,13 +173,6 @@ impl PartialEq for Scope {
 
 impl Eq for Scope {}
 
-impl Hash for Scope {
-    #[no_coverage]
-    fn hash<H: Hasher>(&self, state: &mut H) {
-        self.exprs.hash(state)
-    }
-}
-
 impl IntoIterator for Scope {
     type Item = Expr;
 
@@ -188,7 +190,7 @@ pub enum ScopeError {
     InvalidPath(Range<usize>),
 }
 
-#[derive(Debug, Clone, PartialEq, Eq, Hash)]
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Expr {
     pub labels: Box<Labels>,
     pub base: BaseExpr,
@@ -268,7 +270,7 @@ impl Expr {
     }
 }
 
-#[derive(Debug, Clone, PartialEq, Eq, Hash)]
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub struct BaseExpr {
     pub span: Range<usize>,
     pub variant: ExprVariant,
@@ -317,12 +319,14 @@ impl BaseExpr {
                 span: self.span.start..path.last().unwrap().span.end,
                 variant: match self.variant {
                     ExprVariant::Natural(_) => return Err((path, depth)),
-                    ExprVariant::Reference(reference) => ExprVariant::Reference(match reference {
-                        Reference::Unresolved(unresolved) => {
-                            // into_vec: https://github.com/rust-lang/rust/issues/59878
-                            Reference::Unresolved(unresolved.join(path.into_vec()))
-                        }
-                        Reference::Resolved(_) => unreachable!(),
+                    ExprVariant::Reference(reference) => ExprVariant::Reference(Reference {
+                        cell: RefCell::new(match reference.cell.into_inner() {
+                            ReferenceVariant::Unresolved(unresolved) => {
+                                // into_vec: https://github.com/rust-lang/rust/issues/59878
+                                ReferenceVariant::Unresolved(unresolved.join(path.into_vec()))
+                            }
+                            ReferenceVariant::Resolved(_) => unreachable!(),
+                        }),
                     }),
                     ExprVariant::SExpr(scope) => {
                         match scope.expr_from_label.get(&label.name).copied() {
@@ -345,34 +349,43 @@ impl BaseExpr {
     }
 }
 
-#[derive(Debug, Clone, PartialEq, Eq, Hash)]
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub enum ExprVariant {
     Natural(Natural),
     Reference(Reference),
     SExpr(Scope),
 }
 
-#[derive(Debug, Clone, PartialEq, Eq, Hash)]
-pub enum Reference {
-    Unresolved(UnresolvedReference),
-    Resolved(ResolvedReference),
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct Reference {
+    cell: RefCell<ReferenceVariant>,
 }
 
 impl Reference {
     pub fn unresolved(symbol: Symbol, path: impl Into<Box<UnresolvedPath>>) -> Self {
-        Self::Unresolved(UnresolvedReference {
-            symbol,
-            path: path.into(),
-        })
+        Self {
+            cell: RefCell::new(ReferenceVariant::Unresolved(UnresolvedReference {
+                symbol,
+                path: path.into(),
+            })),
+        }
     }
 
     pub fn resolved(scope: usize, offset: isize, path: impl Into<Box<[usize]>>) -> Self {
-        Self::Resolved(ResolvedReference {
-            scope,
-            offset,
-            path: path.into(),
-        })
+        Self {
+            cell: RefCell::new(ReferenceVariant::Resolved(ResolvedReference {
+                scope,
+                offset,
+                path: path.into(),
+            })),
+        }
     }
+}
+
+#[derive(Debug, Clone, PartialEq, Eq, Hash)]
+pub enum ReferenceVariant {
+    Unresolved(UnresolvedReference),
+    Resolved(ResolvedReference),
 }
 
 /// A chain of symbols pointing to an [Expr] within the current scope.
