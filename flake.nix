@@ -89,7 +89,7 @@
         };
 
         checks = {
-          inherit (self.packages.${system}.default.checks)
+          inherit (self.packages.${system}.default)
             clippy
             coverage;
 
@@ -103,8 +103,8 @@
         devShells.default = self.packages.${system}.default.overrideAttrs (attrs: {
           doCheck = true;
           checkInputs = with pkgs; [
-            self.packages.${system}.default.checks.clippy.nativeBuildInputs
-            self.packages.${system}.default.checks.coverage.nativeBuildInputs
+            self.packages.${system}.default.clippy.nativeBuildInputs
+            self.packages.${system}.default.coverage.nativeBuildInputs
             linter.nativeBuildInputs
             nodePackages.markdown-link-check
           ];

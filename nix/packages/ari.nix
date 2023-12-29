@@ -17,7 +17,7 @@ craneLib.buildPackage {
 
   doCheck = false;
 
-  passthru.checks = {
+  passthru = {
     clippy = craneLib.cargoClippy {
       inherit src cargoArtifacts;
       cargoClippyExtraArgs = "--all-targets -- --deny warnings";
