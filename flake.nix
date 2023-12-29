@@ -82,26 +82,29 @@
           inherit pkgs;
         };
       in
-      rec {
-        packages.default = callPackage ./nix/packages/ari.nix { };
+      {
+        packages = {
+          ari = callPackage ./nix/packages/ari.nix { };
+          default = self.packages.${system}.ari;
+        };
 
         checks = {
-          inherit (packages.default.checks)
+          inherit (self.packages.${system}.default.checks)
             clippy
             coverage;
 
           flake-linter = linter.check;
-        } // packages;
+        } // self.packages.${system};
 
         apps = {
           inherit (linter) fix;
         };
 
-        devShells.default = packages.default.overrideAttrs (attrs: {
+        devShells.default = self.packages.${system}.default.overrideAttrs (attrs: {
           doCheck = true;
           checkInputs = with pkgs; [
-            checks.clippy.nativeBuildInputs
-            checks.coverage.nativeBuildInputs
+            self.packages.${system}.default.checks.clippy.nativeBuildInputs
+            self.packages.${system}.default.checks.coverage.nativeBuildInputs
             linter.nativeBuildInputs
             nodePackages.markdown-link-check
           ];
