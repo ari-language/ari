@@ -12,7 +12,7 @@
       };
     };
 
-    nixpkgs.url = "nixpkgs/release-23.11";
+    nixpkgs.url = "nixpkgs/nixos-23.11";
 
     crane = {
       url = "github:ipetkov/crane";
